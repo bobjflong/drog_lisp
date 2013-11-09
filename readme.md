@@ -4,8 +4,7 @@
 
 Dynamic scoping + recursion.
 
-<pre><code>
-
+```ruby
 load 'machine.rb'
 number = 10
 puts LispMachine.run """
@@ -20,5 +19,6 @@ puts LispMachine.run """
   (Call fact #{number})
 )
 """
-</code></pre>
+```
+
 Macros are coming soon.
