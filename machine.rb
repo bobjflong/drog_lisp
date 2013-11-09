@@ -7,6 +7,13 @@ module LispMachine
   
   @last_evaluated
   
+  # Helper method to run embedded programs quickly
+  def self.run(prog)
+    parsed = Parser.new.parse prog
+    LispMachine::interpret(parsed)
+    LispMachine.instance_variable_get('@last_evaluated')
+  end
+  
   def self.lookup(scope, x)
     scope.downto(0).each do |level|
       result = LispMachine::SYMBOL_TABLE[level][x.to_sym]
@@ -36,12 +43,28 @@ module LispMachine
       x.length > 2 and x[0] == '+'
     end
     
+    def self.is_sub(x)
+      x.length > 2 and x[0] == '-'
+    end
+    
     def self.is_call(x)
       x.length > 2 and x[0] == 'call'
     end
     
     def self.is_a_getter(x)
       x.length > 1 and x[0] == 'get'
+    end
+    
+    def self.is_gt(x)
+      x.length > 2 and x[0] == '<'
+    end
+    
+    def self.is_cond(x)
+      x.length > 2 and x[0] == 'if'
+    end
+    
+    def self.is_mul(x)
+      x.length > 2 and x[0] == '*'
     end
   end
   
@@ -77,7 +100,10 @@ module LispMachine
       if (branch.length > 2) then
         args = []
         2.upto(branch.length - 1).each do |i|
-          args << branch[i]
+          #puts "Mapping: #{branch[i]}"
+          LispMachine.interpret([branch[i]])
+          #puts "last evaled #{LispMachine.instance_variable_get('@last_evaluated')}"
+          args << LispMachine.instance_variable_get('@last_evaluated')
         end
         result[:args] = args
       end
@@ -108,7 +134,6 @@ module LispMachine
     
     def self.pass_execution_to_function(branch)
       LispMachine.interpret(branch[:contents])
-      
       LispMachine::pop_scope()
     end
     
@@ -128,6 +153,7 @@ module LispMachine
       return @last_evaluated
     end
     
+    #puts "Branch = #{branch}"
     return unless branch
     
     # ["def", "f", ["+", 1, 2]], ["+", 1, 2]
@@ -146,18 +172,37 @@ module LispMachine
     elsif Identifier.is_a_show(branch) then
       #puts "showing #{branch[1]}"
       LispMachine.interpret([branch[1]])
-      puts @last_evaluated
+     # puts @last_evaluated
+    
+    elsif Identifier.is_gt(branch) then
+      args = LanguageHelpers.extract_simple_args(branch)
+      @last_evaluated = args[0] < args[1]
+    
+    elsif Identifier.is_cond(branch) then
+      LispMachine::interpret([branch[1]])
+      if @last_evaluated then
+        LispMachine::interpret([branch[2]])
+      else
+        LispMachine::interpret([branch[3]])
+      end
+    
+    elsif Identifier.is_mul(branch) then
+      #puts "#{branch[1]} * #{branch[2]}"
+      args = LanguageHelpers.extract_simple_args(branch)
+      @last_evaluated = args[0].to_i * args[1].to_i
+      #puts "AFTER MUL, @last_evaluated = #{@last_evaluated}"
     
     elsif Identifier.is_an_adder(branch) then
-      #puts "ADDER: #{branch}"
       args = LanguageHelpers.extract_simple_args(branch)
-      
-      ##puts "ARGS : #{args}"
       @last_evaluated = args[0].to_i + args[1].to_i
     
+    elsif Identifier.is_sub(branch) then
+      args = LanguageHelpers.extract_simple_args(branch)
+      @last_evaluated = args[0].to_i - args[1].to_i
+
     elsif Identifier.is_call(branch)
+     # puts "IS_CALL #{branch}"
       args = LanguageHelpers.extract_complex_args_func_call(branch)
-      
       LanguageHelpers.map_params_for_function(args)
       
     end
@@ -169,21 +214,28 @@ module LispMachine
   end
 end
 
-parsed = Parser.new.parse """
-
-(Do
-
-  (Func f x)
-    (Do
-      (Show (+ 1 x))
-    )
-  (Call f 5)
-)
-
-"""
-
-#print parsed
-LispMachine::interpret(parsed)
+#parsed = Parser.new.parse """
+#
+#(Do
+#
+#  (Func fact x)
+#    (Do
+#      (If (< x 1)
+#        1
+#        (* x (Call fact (- x 1)))
+#      )
+#    )
+#  (Call fact 5)
+#
+#)
+#
+#"""
+#
+##print parsed
+#LispMachine::interpret(parsed)
+#puts "last evaluated"
+#puts LispMachine.instance_variable_get('@last_evaluated')
+#
 ##puts ""
 #print LispMachine::SYMBOL_TABLE
 ##puts ""
