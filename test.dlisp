@@ -1,0 +1,4 @@
+  (Let 
+    (Def myvar (Add (1) (9)))
+    (Call [1,2,3])
+  )
