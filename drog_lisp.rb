@@ -18,7 +18,10 @@ module Tokens
   SUB = "-"
   GET = "GET"
   SET = "SET"
-  
+  CALL= "CALL"
+  DEF = "DEF"
+  SHOW= "SHOW"
+end
 
 class LispMaker < Whittle::Parser
 
@@ -75,8 +78,6 @@ class LispMaker < Whittle::Parser
     end
   end
   
-  rule(:any => /.*/).as { |any| any }
-
   start(:expr)
 end
 
