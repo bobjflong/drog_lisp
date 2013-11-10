@@ -4,6 +4,9 @@
 
 Dynamic scoping + recursion.
 
+#####Examples:
+######Recursive factorial:
+
 ```ruby
 load 'machine.rb'
 number = 10
@@ -19,6 +22,30 @@ puts LispMachine.run """
   (Call fact #{number})
 )
 """
+
+# => 3628800
 ```
 
-Macros are coming soon.
+######Using cons to calculate ranges:
+
+```ruby
+print LispMachine.run """
+(Do
+
+  (Func range x n)
+    (Do
+      (If (= x n)
+        (Cons x null)
+        (Cons x 
+          (Call range (+ 1 x) n)
+        )
+      )
+    )
+
+  (Call range 0 10)
+)
+"""
+
+# => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+```

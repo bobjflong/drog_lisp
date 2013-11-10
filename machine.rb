@@ -1,5 +1,6 @@
 
 load 'd2.rb'
+load 'machine_identifiers.rb'
 
 module LispMachine
   SYMBOL_TABLE = [{
@@ -29,45 +30,7 @@ module LispMachine
   def self.pop_scope
     LispMachine::SYMBOL_TABLE.pop
   end
-  
-  module Identifier
-    def self.is_a_definition(x)
-      x.length > 2 and x[0] == 'def'
-    end
     
-    def self.is_a_show(x)
-      x.length > 1 and x[0] == 'show'
-    end
-    
-    def self.is_an_adder(x)
-      x.length > 2 and x[0] == '+'
-    end
-    
-    def self.is_sub(x)
-      x.length > 2 and x[0] == '-'
-    end
-    
-    def self.is_call(x)
-      x.length > 2 and x[0] == 'call'
-    end
-    
-    def self.is_a_getter(x)
-      x.length > 1 and x[0] == 'get'
-    end
-    
-    def self.is_gt(x)
-      x.length > 2 and x[0] == '<'
-    end
-    
-    def self.is_cond(x)
-      x.length > 2 and x[0] == 'if'
-    end
-    
-    def self.is_mul(x)
-      x.length > 2 and x[0] == '*'
-    end
-  end
-  
   module LanguageHelpers
     def self.extract_args_from_definition(x)
       if x.length > 3
@@ -91,7 +54,7 @@ module LispMachine
       
       return res
     end
-    
+        
     # Extract and set up a function call
     def self.extract_complex_args_func_call(branch)
       result = {
@@ -99,9 +62,15 @@ module LispMachine
       }
       if (branch.length > 2) then
         args = []
+        
+        #puts "EXTRACTING ARGS NORM: #{branch}"
+        flattened = branch#.flatten(1)
         2.upto(branch.length - 1).each do |i|
           #puts "Mapping: #{branch[i]}"
-          LispMachine.interpret([branch[i]])
+          wrapper = [branch[i]]
+          #puts "Wrapped for exec: #{wrapper}"
+          LispMachine.interpret wrapper
+          
           #puts "last evaled #{LispMachine.instance_variable_get('@last_evaluated')}"
           args << LispMachine.instance_variable_get('@last_evaluated')
         end
@@ -122,9 +91,14 @@ module LispMachine
         # Begin the mapping by creating a new scope
 
         LispMachine::push_scope()
-
+        ####puts LispMachine::SYMBOL_TABLE
+        
         # Attempt to map params to arguments
-        func_find[:arguments].each_with_index do |a, i|                    
+        # Flatten arguments here?
+        
+        ####puts "FUNC ARGS = #{args}"
+        func_find[:arguments].flatten.each_with_index do |a, i|
+          ####puts "mapping #{a} = #{args[:args][i]}"          
           LispMachine::SYMBOL_TABLE[-1]["#{a}".to_sym] = args[:args][i]
         end
         
@@ -145,15 +119,14 @@ module LispMachine
     
     branch = tree[0]
     
-    #puts "BRANCH IS #{branch}"
-
-    if branch.class == Fixnum
-      ##puts "Sending back atom: #{branch}"
-      @last_evaluated = branch
+    ####puts "BRANCH IS #{branch}"
+    
+    if branch.nil? 
+      @last_evaluated = nil
       return @last_evaluated
     end
     
-    #puts "Branch = #{branch}"
+    ####puts "Branch = #{branch}"
     return unless branch
     
     # ["def", "f", ["+", 1, 2]], ["+", 1, 2]
@@ -164,19 +137,38 @@ module LispMachine
         arguments: LanguageHelpers::extract_args_from_definition(branch)
       }
     
+    elsif Identifier.is_const(branch) then
+      @last_evaluated = branch[1]
+      return @last_evaluated
+    
     elsif Identifier.is_a_getter(branch) then
       
-      #puts "getting #{branch[1]}"
+      ####puts "getting #{branch[1]}"
       @last_evaluated = lookup(LispMachine::SYMBOL_TABLE.length-1, branch[1])
     
     elsif Identifier.is_a_show(branch) then
-      #puts "showing #{branch[1]}"
+      ####puts "showing #{branch[1]}"
       LispMachine.interpret([branch[1]])
-     # puts @last_evaluated
+      puts @last_evaluated
     
     elsif Identifier.is_gt(branch) then
       args = LanguageHelpers.extract_simple_args(branch)
       @last_evaluated = args[0] < args[1]
+    
+    elsif Identifier.is_cons(branch) then
+      LispMachine::interpret([branch[1]])
+      left = @last_evaluated
+      
+      LispMachine::interpret([branch[2]])
+      right = @last_evaluated
+      
+      ###puts "CONS: #{left} #{right}"
+            
+      if not right
+        @last_evaluated = left
+      else
+        @last_evaluated = [left, right].flatten 1
+      end
     
     elsif Identifier.is_cond(branch) then
       LispMachine::interpret([branch[1]])
@@ -187,10 +179,10 @@ module LispMachine
       end
     
     elsif Identifier.is_mul(branch) then
-      #puts "#{branch[1]} * #{branch[2]}"
+      ####puts "#{branch[1]} * #{branch[2]}"
       args = LanguageHelpers.extract_simple_args(branch)
       @last_evaluated = args[0].to_i * args[1].to_i
-      #puts "AFTER MUL, @last_evaluated = #{@last_evaluated}"
+      ####puts "AFTER MUL, @last_evaluated = #{@last_evaluated}"
     
     elsif Identifier.is_an_adder(branch) then
       args = LanguageHelpers.extract_simple_args(branch)
@@ -200,16 +192,21 @@ module LispMachine
       args = LanguageHelpers.extract_simple_args(branch)
       @last_evaluated = args[0].to_i - args[1].to_i
 
+    elsif Identifier.is_eq(branch) then
+      args = LanguageHelpers.extract_simple_args(branch)
+      ###puts "EQ: #{args}"
+      @last_evaluated = args[0] == args[1]
+    
     elsif Identifier.is_call(branch)
-     # puts "IS_CALL #{branch}"
+     # ###puts "IS_CALL #{branch}"
       args = LanguageHelpers.extract_complex_args_func_call(branch)
       LanguageHelpers.map_params_for_function(args)
       
     end
    
-    #puts "\nlast evaluated = #{@last_evaluated}"
-    #puts LispMachine::SYMBOL_TABLE
-    ##puts "\ncontinuing with #{tree[1]}\n"
+    ####puts "\nlast evaluated = #{@last_evaluated}"
+    ####puts LispMachine::SYMBOL_TABLE
+    #####puts "\ncontinuing with #{tree[1]}\n"
     LispMachine.interpret(tree[1])
   end
 end
@@ -233,11 +230,11 @@ end
 #
 ##print parsed
 #LispMachine::interpret(parsed)
-#puts "last evaluated"
-#puts LispMachine.instance_variable_get('@last_evaluated')
+####puts "last evaluated"
+####puts LispMachine.instance_variable_get('@last_evaluated')
 #
-##puts ""
+#####puts ""
 #print LispMachine::SYMBOL_TABLE
-##puts ""
+#####puts ""
 
-##puts ""
+#####puts ""

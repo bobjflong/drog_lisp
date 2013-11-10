@@ -16,3 +16,24 @@ puts LispMachine.run """
 
 )
 """
+
+puts "======================================="
+
+print LispMachine.run """
+(Do
+
+  (Func range x n)
+    (Do
+      (If (= x n)
+        (Cons x null)
+        (Cons x 
+          (Call range (+ 1 x) n)
+        )
+      )
+    )
+
+  (Call range 0 10)
+)
+"""
+
+print "\n"
