@@ -14,6 +14,8 @@ module Tokens
   CONS = "cons"
   EQ = "="
   CONST = "const"
+  CAR = "car"
+  CDR = "cdr"
 end
 
 class Parser < Whittle::Parser
@@ -29,6 +31,8 @@ class Parser < Whittle::Parser
   rule("<")
   
   rule(:eq => /\=/).as { |eq| eq }
+  rule(:car => /Car/).as { |car| car }
+  rule(:cdr => /Cdr/).as { |cdr| cdr }
   rule(:sub => /\-/).as { |sub| sub }
   rule(:mul => /\*/).as { |mul| mul }
   rule(:add => /\+/).as { |add| add }
@@ -65,6 +69,11 @@ class Parser < Whittle::Parser
     r["(", :show, :inner_expr, ")"].as do |_,_,n,_|
       [Tokens::SHOW, n ]
     end
+ 
+    r[:deducted_value].as { |d| d }   
+  end
+  
+  rule(:deducted_value) do |r|
     
     r["(", :call, :name, :argument_list, ")"].as do |_,_,n,a|
       result = [Tokens::CALL, n]
@@ -82,11 +91,7 @@ class Parser < Whittle::Parser
       end
       result
     end
- 
-    r[:deducted_value].as { |d| d }   
-  end
-  
-  rule(:deducted_value) do |r|
+    
     r["(", "<", :inner_expr, :inner_expr, ")"].as do |_,_,a,b,_|
       [ Tokens::LT, a, b ]
     end
@@ -104,6 +109,9 @@ class Parser < Whittle::Parser
     r["(", :add, :inner_expr, :inner_expr, ")"].as { |_,_,a,b,_| [ Tokens::ADD, a, b ] }
     
     r["(", :sub, :inner_expr, :inner_expr, ")"].as { |_,_,a,b,_| [ Tokens::SUB, a, b ] }
+
+    r["(", :car, :inner_expr, ")"].as { |_,_,a| [ Tokens::CAR, a ] }
+    r["(", :cdr, :inner_expr, ")"].as { |_,_,a| [ Tokens::CDR, a ] }
 
     
     r["(", :mul, :inner_expr, :inner_expr, ")"].as do |_,_,a,b,_|

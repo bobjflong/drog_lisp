@@ -26,26 +26,32 @@ puts LispMachine.run """
 # => 3628800
 ```
 
-######Using cons to calculate ranges:
+######Higher orderism, using cons, car cdr:
 
 ```ruby
+#Double every number from 1 to 10
 print LispMachine.run """
 (Do
 
-  (Func range x n)
+  (Func double x)
     (Do
-      (If (= x n)
-        (Cons x null)
-        (Cons x 
-          (Call range (+ 1 x) n)
+      (* x 2)
+    )
+
+  (Func apply-list n f)
+    (Do
+      (If (Cdr n)
+        (Cons (Call f (Car n))
+          (Call apply-list (Cdr n))
         )
+        null
       )
     )
 
-  (Call range 0 10)
+  (Call apply-list (Call range 1 11) double)
+
 )
 """
 
-# => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-
+# => [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
 ```

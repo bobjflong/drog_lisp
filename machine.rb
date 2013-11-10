@@ -130,7 +130,7 @@ module LispMachine
     return unless branch
     
     # ["def", "f", ["+", 1, 2]], ["+", 1, 2]
-    if Identifier::is_a_definition(branch) then
+    if Identifier.is_a_definition(branch) then
       LispMachine::SYMBOL_TABLE[-1][branch[1].to_sym] = {
         type: 'definition',
         contents: branch[-1],
@@ -141,19 +141,31 @@ module LispMachine
       @last_evaluated = branch[1]
       return @last_evaluated
     
-    elsif Identifier.is_a_getter(branch) then
-      
-      ####puts "getting #{branch[1]}"
+    elsif Identifier.is_a_getter(branch) then 
       @last_evaluated = lookup(LispMachine::SYMBOL_TABLE.length-1, branch[1])
-    
+
     elsif Identifier.is_a_show(branch) then
       ####puts "showing #{branch[1]}"
       LispMachine.interpret([branch[1]])
-      puts @last_evaluated
+      print @last_evaluated
+      print "\n"
     
     elsif Identifier.is_gt(branch) then
       args = LanguageHelpers.extract_simple_args(branch)
       @last_evaluated = args[0] < args[1]
+    
+    elsif Identifier.is_car(branch) then
+      LispMachine.interpret([branch[1]])
+      @last_evaluated = @last_evaluated[0]
+    
+    elsif Identifier.is_cdr(branch) then
+      LispMachine.interpret([branch[1]])
+      result = @last_evaluated[1..-1]
+      if result.empty?
+        @last_evaluated = nil
+      else
+        @last_evaluated = result
+      end
     
     elsif Identifier.is_cons(branch) then
       LispMachine::interpret([branch[1]])
@@ -198,10 +210,10 @@ module LispMachine
       @last_evaluated = args[0] == args[1]
     
     elsif Identifier.is_call(branch)
-     # ###puts "IS_CALL #{branch}"
+    #  puts "IS_CALL #{branch}"
       args = LanguageHelpers.extract_complex_args_func_call(branch)
       LanguageHelpers.map_params_for_function(args)
-      
+    #  puts "AFTER CALL #{@last_evaluated}"
     end
    
     ####puts "\nlast evaluated = #{@last_evaluated}"

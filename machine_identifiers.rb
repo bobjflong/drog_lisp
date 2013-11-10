@@ -47,4 +47,13 @@ module Identifier
     x.length > 1 and x[0] == 'const'
   end
   
+  def self.is_car(x)
+    x.length > 1 and x[0] == 'car'
+  end
+
+  def self.is_cdr(x)
+    x.length > 1 and x[0] == 'cdr'
+  end
+
+  
 end

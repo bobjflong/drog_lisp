@@ -1,7 +1,7 @@
 load 'machine.rb'
 
 number = 10
-
+=begin
 puts LispMachine.run """
 (Do
 
@@ -18,7 +18,7 @@ puts LispMachine.run """
 """
 
 puts "======================================="
-
+=end
 print LispMachine.run """
 (Do
 
@@ -32,7 +32,31 @@ print LispMachine.run """
       )
     )
 
-  (Call range 0 10)
+)
+"""
+
+print "\n"
+
+print LispMachine.run """
+(Do
+  
+  (Func double x)
+    (Do
+      (* x 2)
+    )
+
+  (Func apply-list n f)
+    (Do
+      (If (Cdr n)
+        (Cons (Call f (Car n))
+          (Call apply-list (Cdr n))
+        )
+        null
+      )
+    )
+  
+  (Call apply-list (Call range 1 11) double)
+
 )
 """
 
