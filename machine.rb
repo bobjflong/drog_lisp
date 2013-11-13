@@ -4,6 +4,7 @@ load 'machine_identifiers.rb'
 
 module LispMachine
   SYMBOL_TABLE = [{
+    :m => 4
   }]
   
   @last_evaluated
@@ -33,13 +34,21 @@ module LispMachine
     
   module LanguageHelpers
     def self.extract_args_from_definition(x)
-      if x.length > 3
-        results = []
-        2.upto(x.length - 2) do |i|
-          results << x[i]
+      #puts "def = #{x}"
+      if x[2]
+        return [x[2]]
+      end
+    end
+    
+    def self.close_over_variables(branch)
+      closed_over = branch[3]
+      saved_as = {}
+      if (closed_over)
+        [closed_over].flatten.each do |var|
+          saved_as[var.to_sym] = LispMachine.lookup LispMachine::SYMBOL_TABLE.length-1, var
         end
-        return results
-      end 
+        LispMachine::SYMBOL_TABLE[-1][branch[1].to_sym][:closed_over] = saved_as
+      end
     end
     
     # Extract simple args for 2-operand operators like +, - etc.
@@ -80,6 +89,14 @@ module LispMachine
       return result
     end
     
+    def self.push_closed_variables_to_scope(closed)
+      if closed
+        closed.each do |k,v|
+          LispMachine::SYMBOL_TABLE[-1][k] = v
+        end
+      end
+    end
+    
     # Set up a symbol table for a function call
     def self.map_params_for_function(args)
       func_find = LispMachine::lookup(LispMachine::SYMBOL_TABLE.length - 1, args[:func_name])
@@ -98,10 +115,11 @@ module LispMachine
         
         ####puts "FUNC ARGS = #{args}"
         func_find[:arguments].flatten.each_with_index do |a, i|
-          ####puts "mapping #{a} = #{args[:args][i]}"          
+          ####puts "mapping #{a} = #{args[:args][i]}"         
           LispMachine::SYMBOL_TABLE[-1]["#{a}".to_sym] = args[:args][i]
         end
         
+        LanguageHelpers.push_closed_variables_to_scope(func_find[:closed_over])
         LanguageHelpers.pass_execution_to_function func_find
       end
     end
@@ -131,11 +149,22 @@ module LispMachine
     
     # ["def", "f", ["+", 1, 2]], ["+", 1, 2]
     if Identifier.is_a_definition(branch) then
+      
       LispMachine::SYMBOL_TABLE[-1][branch[1].to_sym] = {
         type: 'definition',
         contents: branch[-1],
         arguments: LanguageHelpers::extract_args_from_definition(branch)
       }
+      
+      LanguageHelpers::close_over_variables(branch)
+      
+      @last_evaluated = LispMachine::SYMBOL_TABLE[-1][branch[1].to_sym]
+      
+    #  puts "symbol = #{LispMachine::SYMBOL_TABLE[-1][branch[1].to_sym]}"
+    
+    elsif Identifier.is_let(branch) then
+      LispMachine.interpret([branch[2]])
+      LispMachine::SYMBOL_TABLE[-1][branch[1].to_sym] = @last_evaluated
     
     elsif Identifier.is_const(branch) then
       @last_evaluated = branch[1]
@@ -145,9 +174,15 @@ module LispMachine
       @last_evaluated = lookup(LispMachine::SYMBOL_TABLE.length-1, branch[1])
 
     elsif Identifier.is_a_show(branch) then
-      ####puts "showing #{branch[1]}"
+      #puts LispMachine::SYMBOL_TABLE
       LispMachine.interpret([branch[1]])
-      print @last_evaluated
+      if @last_evaluated.kind_of? Array and @last_evaluated.length > 1
+        if @last_evaluated[0] == 'const'
+          print @last_evaluated[1]
+        end
+      else
+        print @last_evaluated
+      end
       print "\n"
     
     elsif Identifier.is_gt(branch) then
@@ -210,7 +245,6 @@ module LispMachine
       @last_evaluated = args[0] == args[1]
     
     elsif Identifier.is_call(branch)
-    #  puts "IS_CALL #{branch}"
       args = LanguageHelpers.extract_complex_args_func_call(branch)
       LanguageHelpers.map_params_for_function(args)
     #  puts "AFTER CALL #{@last_evaluated}"

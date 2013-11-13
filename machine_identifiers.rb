@@ -54,6 +54,10 @@ module Identifier
   def self.is_cdr(x)
     x.length > 1 and x[0] == 'cdr'
   end
+  
+  def self.is_let(x)
+    x.length > 2 and x[0] == 'let'
+  end
 
   
 end

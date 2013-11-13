@@ -1,7 +1,7 @@
 load 'machine.rb'
 
 number = 10
-=begin
+
 puts LispMachine.run """
 (Do
 
@@ -17,9 +17,7 @@ puts LispMachine.run """
 )
 """
 
-puts "======================================="
-=end
-print LispMachine.run """
+LispMachine.run """
 (Do
 
   (Func range x n)
@@ -45,7 +43,7 @@ print LispMachine.run """
       (* x 2)
     )
 
-  (Func apply-list n f)
+  (Func apply-list n f )
     (Do
       (If (Cdr n)
         (Cons (Call f (Car n))
@@ -59,5 +57,45 @@ print LispMachine.run """
 
 )
 """
-
 print "\n"
+
+LispMachine.run """
+
+(Do
+
+  (Let x (+ 3 1))
+  
+  (Func example void ~(x))
+    (Do
+      (Show x)
+    )
+    
+  (Let x 5)
+  
+  (Call example void)  
+  (Show x)
+  
+)
+
+"""
+
+
+LispMachine.run """
+
+(Do
+
+  (Func create-closure void)
+    (Do
+      (Let x 13)
+      (Func use-closed-value void ~(x))
+        (Do
+          (Show x)
+        )
+    )
+    
+  (Let my-closure (Call create-closure void))
+  (Call my-closure void)
+
+)
+"""
+

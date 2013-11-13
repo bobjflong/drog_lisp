@@ -16,6 +16,7 @@ module Tokens
   CONST = "const"
   CAR = "car"
   CDR = "cdr"
+  LET = "let"
 end
 
 class Parser < Whittle::Parser
@@ -29,6 +30,7 @@ class Parser < Whittle::Parser
   rule("{")
   rule("}")
   rule("<")
+  rule("~")
   
   rule(:eq => /\=/).as { |eq| eq }
   rule(:car => /Car/).as { |car| car }
@@ -43,7 +45,8 @@ class Parser < Whittle::Parser
   
   #call a func with a list of args
   rule(:call => /Call/).as { |c| c }
-  
+
+  rule(:let => /Let/).as { |l| l }
   rule(:if => /If/).as { |i| i }
   rule(:show => /Show/).as { |s| s }
   rule(:name => /[a-zA-Z\-]+/).as { |n| n }
@@ -62,8 +65,12 @@ class Parser < Whittle::Parser
   
   rule(:inner_expr) do |r|
  
-    r["(", :define, :name, :param_list, ")", :expr].as do |_,_,n,p,_,e| 
-      [ Tokens::DEFINE, n, p, e ]
+    r["(", :define, :name, :param_list, :closure_list, ")", :expr].as do |_,_,n,p,c,_,e| 
+      [ Tokens::DEFINE, n, p, c, e ]
+    end
+    
+    r["(", :let, :name, :deducted_value, ")"].as do |_,_,n,v,_|
+      [ Tokens::LET, n, v ]
     end
  
     r["(", :show, :inner_expr, ")"].as do |_,_,n,_|
@@ -73,20 +80,20 @@ class Parser < Whittle::Parser
     r[:deducted_value].as { |d| d }   
   end
   
+  rule(:closure_list) do |r|
+    r["~", "(", :param_list, ")"].as { |_,_,c,_| c }
+    r[]
+  end
+  
   rule(:deducted_value) do |r|
     
     r["(", :call, :name, :argument_list, ")"].as do |_,_,n,a|
       result = [Tokens::CALL, n]
-     # if a.length > 1
-        #a = a.flatten 1
-      #end
-      #puts "arg list; #{a}"
       if a.length > 0 and not a[0].kind_of? Array
         #single element arg list
         a = [a]
       end
       a.each do |p|
-        #puts "PARAM #{p}"
         result << p
       end
       result
