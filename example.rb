@@ -51,11 +51,11 @@ print LispMachine.run """
         (Cons (Call f (Car n))
           (Call apply-list (Cdr n))
         )
-        null
+        (Cons (Call f (Car n)) null)
       )
     )
   
-  (Call apply-list (Call range 1 11) double)
+  (Call apply-list (Call range 1 10) double)
 
 )
 """
