@@ -84,17 +84,18 @@ LispMachine.run """
 
 (Do
 
-  (Func create-closure void)
+  (Func create-adder start void)
     (Do
-      (Let x 13)
-      (Func use-closed-value void ~(x))
+      (Let x start)
+      (Func adder val ~(x))
         (Do
-          (Show x)
+          (Let x (+ x val))
         )
     )
     
-  (Let my-closure (Call create-closure void))
-  (Call my-closure void)
+  (Let my-adder (Call create-adder 5))
+  (Show (Call my-adder 5))
+  (Show (Call my-adder 5))
 
 )
 """

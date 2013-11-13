@@ -96,6 +96,16 @@ module LispMachine
         end
       end
     end
+
+    def self.save_closed_variables_from_scope(closed)
+      result = {}
+      if closed
+        closed.each do |k, v|
+          result[k.to_sym] = LispMachine::SYMBOL_TABLE[-1][k.to_sym]
+        end
+      end
+      result
+    end
     
     # Set up a symbol table for a function call
     def self.map_params_for_function(args)
@@ -108,25 +118,30 @@ module LispMachine
         # Begin the mapping by creating a new scope
 
         LispMachine::push_scope()
-        ####puts LispMachine::SYMBOL_TABLE
         
-        # Attempt to map params to arguments
-        # Flatten arguments here?
-        
-        ####puts "FUNC ARGS = #{args}"
         func_find[:arguments].flatten.each_with_index do |a, i|
-          ####puts "mapping #{a} = #{args[:args][i]}"         
           LispMachine::SYMBOL_TABLE[-1]["#{a}".to_sym] = args[:args][i]
         end
         
         LanguageHelpers.push_closed_variables_to_scope(func_find[:closed_over])
-        LanguageHelpers.pass_execution_to_function func_find
+        reclosed = LanguageHelpers.pass_execution_to_function func_find
+
+        if reclosed
+          LispMachine::lookup(LispMachine::SYMBOL_TABLE.length - 1, args[:func_name])[:closed_over] = reclosed
+        end
+
       end
     end
     
     def self.pass_execution_to_function(branch)
       LispMachine.interpret(branch[:contents])
+
+      # Gather new closed values
+      reclosed = LanguageHelpers.save_closed_variables_from_scope branch[:closed_over]
+
       LispMachine::pop_scope()
+
+      return reclosed
     end
     
   end
@@ -153,7 +168,8 @@ module LispMachine
       LispMachine::SYMBOL_TABLE[-1][branch[1].to_sym] = {
         type: 'definition',
         contents: branch[-1],
-        arguments: LanguageHelpers::extract_args_from_definition(branch)
+        arguments: LanguageHelpers::extract_args_from_definition(branch),
+        name: branch[1].to_sym
       }
       
       LanguageHelpers::close_over_variables(branch)

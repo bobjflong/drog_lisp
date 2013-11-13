@@ -90,30 +90,31 @@ LispMachine.run """
 
 ######Closures
 
-In the following case, 13 is printed out, even though it was declared as a local variable in the outer function (create-closure). This is because it was "closed" over by the internal function (use-closed-value) that is returned.
+Classic example of closures, an accumulative adder:
 
 ```ruby
-
 LispMachine.run """
 
 (Do
 
-  (Func create-closure void)
+  (Func create-adder start void)
     (Do
-      (Let x 13)
-      (Func use-closed-value void ~(x))
+      (Let x start)
+      (Func adder val ~(x))
         (Do
-          (Show x)
+          (Let x (+ x val))
         )
     )
-
-  (Let my-closure (Call create-closure void))
-  (Call my-closure void)
+    
+  (Let my-adder (Call create-adder 5))
+  (Show (Call my-adder 5))
+  (Show (Call my-adder 5))
 
 )
 """
 
-#=> 13
+#> 10
+#> 15
 ```
 
 
