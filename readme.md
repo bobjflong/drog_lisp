@@ -1,8 +1,6 @@
 ##drog_lisp
 
-#####Friendly embedded scheme/lisp for ruby.
-
-Dynamic scoping + recursion.
+Embedded functional language for Ruby --- resembles scheme/lisp but with unique semantics.
 
 #####Examples:
 ######Recursive factorial:
