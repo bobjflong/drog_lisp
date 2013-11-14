@@ -59,5 +59,9 @@ module Identifier
     x.length > 2 and x[0] == 'let'
   end
 
+  def self.is_callcc(x)
+    x.length > 1 and x[0] == 'callcc'
+  end
+
   
 end

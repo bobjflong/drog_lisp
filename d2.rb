@@ -17,6 +17,7 @@ module Tokens
   CAR = "car"
   CDR = "cdr"
   LET = "let"
+  CallCC = "callcc"
 end
 
 class Parser < Whittle::Parser
@@ -35,6 +36,7 @@ class Parser < Whittle::Parser
   rule(:eq => /\=/).as { |eq| eq }
   rule(:car => /Car/).as { |car| car }
   rule(:cdr => /Cdr/).as { |cdr| cdr }
+  rule(:callcc => /CallCC/).as { |callcc| callcc }
   rule(:sub => /\-/).as { |sub| sub }
   rule(:mul => /\*/).as { |mul| mul }
   rule(:add => /\+/).as { |add| add }
@@ -97,6 +99,10 @@ class Parser < Whittle::Parser
         result << p
       end
       result
+    end
+
+    r["(", :callcc, :name, ")"].as do |_,_,v|
+      [ Tokens::CallCC, v ]
     end
     
     r["(", "<", :inner_expr, :inner_expr, ")"].as do |_,_,a,b,_|

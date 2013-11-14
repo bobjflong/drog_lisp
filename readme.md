@@ -117,4 +117,71 @@ LispMachine.run """
 #> 15
 ```
 
+######Continuations
 
+drog_lisp neatly wraps Ruby's callcc function to provide expressive continuation support. In the following example I use the CallCC directive to return to a calling function after making nested calls:
+
+```ruby
+LispMachine.run """
+
+(Do
+
+  (Func count-part-two cont)
+    (Do
+      (Show 2)
+      (Call cont 1)
+    )
+
+  (Func count-part-one c)
+    (Do
+      (Show 3)
+      (Call count-part-two c)
+    )
+
+  (Show (+ 0 (CallCC count-part-one)))
+
+)
+
+"""
+
+#> 3
+#> 2
+#> 1
+```
+
+In the next example I use continuations to produce couroutines easily:
+
+```ruby
+LispMachine.run """
+
+(Do
+
+  (Func routine-even other-routine)
+    (Do
+      (Show 2)
+      (Let other-routine (CallCC other-routine))
+      
+      (Show 4)
+      (Let other-routine (CallCC other-routine))
+    )
+  
+  (Func routine-odd other-routine)
+    (Do
+      (Show 1)
+      (Let other-routine (CallCC other-routine))
+
+      (Show 3)
+      (Let other-routine (CallCC other-routine))
+    )
+  
+  (Call routine-odd routine-even)
+
+)
+
+"""
+
+#> 1
+#> 2
+#> 3
+#> 4
+```

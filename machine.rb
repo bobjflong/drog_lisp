@@ -2,6 +2,8 @@
 load 'd2.rb'
 load 'machine_identifiers.rb'
 
+require 'continuation'
+
 module LispMachine
   SYMBOL_TABLE = [{
     :m => 4
@@ -72,15 +74,11 @@ module LispMachine
       if (branch.length > 2) then
         args = []
         
-        #puts "EXTRACTING ARGS NORM: #{branch}"
         flattened = branch#.flatten(1)
         2.upto(branch.length - 1).each do |i|
-          #puts "Mapping: #{branch[i]}"
           wrapper = [branch[i]]
-          #puts "Wrapped for exec: #{wrapper}"
           LispMachine.interpret wrapper
           
-          #puts "last evaled #{LispMachine.instance_variable_get('@last_evaluated')}"
           args << LispMachine.instance_variable_get('@last_evaluated')
         end
         result[:args] = args
@@ -108,9 +106,25 @@ module LispMachine
     end
     
     # Set up a symbol table for a function call
-    def self.map_params_for_function(args)
+    def self.map_params_for_function(args, cc = false)
+
+      #puts "self.map_params_for_function #{args} #{cc}"
       func_find = LispMachine::lookup(LispMachine::SYMBOL_TABLE.length - 1, args[:func_name])
-      
+
+      #puts "func_find #{func_find}"
+      if func_find.kind_of? Continuation and cc
+        #puts "yo 1"
+        LispMachine.instance_variable_set('@last_evaluated', args[:args][0])
+      end
+
+      if func_find.kind_of? Continuation
+        #puts "yo 2"
+        func_find.call
+        return
+      end
+        
+      #puts "here #{func_find} #{@las}"
+
       if not func_find or func_find[:type] != 'definition'
         throw :no_such_function
       else
@@ -185,6 +199,18 @@ module LispMachine
     elsif Identifier.is_const(branch) then
       @last_evaluated = branch[1]
       return @last_evaluated
+
+    elsif Identifier.is_callcc(branch) then
+      func_to_call = branch[1]
+      callcc do |cont|
+        args = [cont]
+
+        # Give passed function the continuation as only parameter
+        params = { func_name: func_to_call, args: args }
+
+        LanguageHelpers.map_params_for_function params, true
+
+      end
     
     elsif Identifier.is_a_getter(branch) then 
       @last_evaluated = lookup(LispMachine::SYMBOL_TABLE.length-1, branch[1])
