@@ -1,10 +1,15 @@
+##drog_lisp
+
+Embedded functional language for Ruby --- resembles scheme/lisp but with unique semantics.
+
+#####Examples:
+######Recursive factorial:
+
+```ruby
 load 'machine.rb'
-
 number = 10
-
 puts LispMachine.run """
 (Do
-
   (Func fact x)
     (Do
       (If (< x 1)
@@ -13,37 +18,25 @@ puts LispMachine.run """
       )
     )
   (Call fact #{number})
-
 )
 """
 
-LispMachine.run """
-(Do
+# => 3628800
+```
 
-  (Func range x n)
-    (Do
-      (If (= x n)
-        (Cons x null)
-        (Cons x 
-          (Call range (+ 1 x) n)
-        )
-      )
-    )
+######Higher orderism, using cons, car cdr:
 
-)
-"""
-
-print "\n"
-
+```ruby
+#Double every number from 1 to 10
 print LispMachine.run """
 (Do
-  
+
   (Func double x)
     (Do
       (* x 2)
     )
 
-  (Func apply-list n f )
+  (Func apply-list n f)
     (Do
       (If (Cdr n)
         (Cons (Call f (Car n))
@@ -52,34 +45,52 @@ print LispMachine.run """
         (Cons (Call f (Car n)) null)
       )
     )
-  
+
   (Call apply-list (Call range 1 10) double)
 
 )
 """
-print "\n"
 
+# => [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+```
+
+######Enforcing lexical scoping + closures
+
+You can store values alongside function definitions to enforce lexical scoping and closure functionality using the tilde "~" directive:
+
+```ruby
 LispMachine.run """
 
 (Do
 
   (Let x (+ 3 1))
-  
+
   (Func example void ~(x))
     (Do
       (Show x)
     )
-    
+
   (Let x 5)
-  
+
   (Call example void)  
   (Show x)
-  
+
 )
 
 """
 
+#> 4
+#> 5
+# Original value of x was used in function as it was included in the closure list using "~"
 
+
+```
+
+######Closures
+
+Classic example of closures, an accumulative adder:
+
+```ruby
 LispMachine.run """
 
 (Do
@@ -100,10 +111,15 @@ LispMachine.run """
 )
 """
 
-puts "----------------------------"
-puts "Continuations"
-puts "----------------------------"
+#> 10
+#> 15
+```
 
+######Continuations
+
+drog_lisp neatly wraps Ruby's callcc function to provide expressive continuation support. In the following example I use the CallCC directive to return to a calling function after making nested calls:
+
+```ruby
 LispMachine.run """
 
 (Do
@@ -118,6 +134,7 @@ LispMachine.run """
     (Do
       (Show 3)
       (Call count-part-two c)
+      (Show 13)
     )
 
   (Show (+ 0 (CallCC count-part-one)))
@@ -126,10 +143,14 @@ LispMachine.run """
 
 """
 
-puts "----------------------------"
-puts "Coroutines"
-puts "----------------------------"
+#> 3
+#> 2
+#> 1
+```
 
+In the next example I use continuations to produce couroutines easily:
+
+```ruby
 LispMachine.run """
 
 (Do
@@ -158,4 +179,8 @@ LispMachine.run """
 
 """
 
-
+#> 1
+#> 2
+#> 3
+#> 4
+```

@@ -134,6 +134,7 @@ LispMachine.run """
     (Do
       (Show 3)
       (Call count-part-two c)
+      (Show 13)
     )
 
   (Show (+ 0 (CallCC count-part-one)))

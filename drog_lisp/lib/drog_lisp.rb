@@ -1,6 +1,6 @@
 
-load 'd2.rb'
-load 'machine_identifiers.rb'
+require 'drog_lisp/grammar'
+require 'drog_lisp/identifiers'
 
 require 'continuation'
 
@@ -298,31 +298,3 @@ module LispMachine
     LispMachine.interpret(tree[1])
   end
 end
-
-#parsed = Parser.new.parse """
-#
-#(Do
-#
-#  (Func fact x)
-#    (Do
-#      (If (< x 1)
-#        1
-#        (* x (Call fact (- x 1)))
-#      )
-#    )
-#  (Call fact 5)
-#
-#)
-#
-#"""
-#
-##print parsed
-#LispMachine::interpret(parsed)
-####puts "last evaluated"
-####puts LispMachine.instance_variable_get('@last_evaluated')
-#
-#####puts ""
-#print LispMachine::SYMBOL_TABLE
-#####puts ""
-
-#####puts ""
