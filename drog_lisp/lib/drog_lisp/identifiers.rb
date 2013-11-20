@@ -2,7 +2,12 @@ module Identifier
   def self.is_a_definition(x)
     x.length > 2 and x[0] == 'def'
   end
-  
+  def self.is_set(x)
+    x.length > 3 and x[0] == 'set'
+  end
+  def self.is_struct(x)
+    x.length > 1 and x[0] == 'struct'
+  end
   def self.is_a_show(x)
     x.length > 1 and x[0] == 'show'
   end

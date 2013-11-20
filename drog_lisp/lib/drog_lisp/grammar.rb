@@ -4,7 +4,9 @@ require 'whittle'
 module Tokens
   ADD = "+"
   DEFINE = "def"
+  SET = "set"
   CALL = "call"
+  STRUCT = "struct"
   GET = "get"
   SHOW = "show"
   LT = "<"
@@ -44,10 +46,11 @@ class Parser < Whittle::Parser
   rule(:cons => /Cons/).as { |c| c }
   rule(:do => /Do/).as { |d| d }
   rule(:null => /null/).as { |n| n }
-  
+ 
+  rule(:set => /Set\-[a-zA-Z\-]+/).as { |s| s }
   #call a func with a list of args
   rule(:call => /Call/).as { |c| c }
-
+  rule(:struct => /Struct/).as { |s| s }
   rule(:let => /Let/).as { |l| l }
   rule(:if => /If/).as { |i| i }
   rule(:show => /Show/).as { |s| s }
@@ -70,13 +73,17 @@ class Parser < Whittle::Parser
     r["(", :define, :name, :param_list, :closure_list, ")", :expr].as do |_,_,n,p,c,_,e| 
       [ Tokens::DEFINE, n, p, c, e ]
     end
-    
+ 
     r["(", :let, :name, :deducted_value, ")"].as do |_,_,n,v,_|
       [ Tokens::LET, n, v ]
     end
  
     r["(", :show, :inner_expr, ")"].as do |_,_,n,_|
       [Tokens::SHOW, n ]
+    end
+
+    r["(", :set, :deducted_value, :deducted_value, ")"].as do |_,s,k,v,_|
+      [ Tokens::SET, s, k, v ]
     end
  
     r[:deducted_value].as { |d| d }   
@@ -88,6 +95,10 @@ class Parser < Whittle::Parser
   end
   
   rule(:deducted_value) do |r|
+    
+    r["(", :struct, :param_list, ")"].as do |_,_,p|
+      [ Tokens::STRUCT, p ]
+    end
     
     r["(", :call, :name, :argument_list, ")"].as do |_,_,n,a|
       result = [Tokens::CALL, n]

@@ -1,6 +1,57 @@
 
 require 'minitest/autorun'
 require 'drog_lisp'
+require 'ostruct'
+
+describe "structs" do
+  it "can create an underlying OpenStruct given field parameters" do
+    assert_equal (LispMachine.run """
+      (Do
+        (Struct name age)
+      )
+    """).class, OpenStruct
+  end
+
+  it "creates the correct variable entries on creation" do
+    assert_output "#<OpenStruct name=nil, age=nil>\n" do 
+      (LispMachine.run """
+        (Do
+          (Show (Struct name age))
+        )
+      """)
+    end
+  end
+  
+  it "generates dynamic setters for fields" do 
+    assert_output "#<OpenStruct name=nil, age=21>\n" do
+      (LispMachine.run """
+        (Do
+          (Let bob (Struct name age))
+          (Set-age bob 21)
+          (Show bob)
+        )
+      """)
+    end
+  end
+end
+
+describe "basic arithmetic" do
+  it "can add numbers" do
+    assert_equal (LispMachine.run """
+      (Do
+        (+ 10 3)
+      )
+    """), 13
+  end
+
+  it "can sub numbers" do
+    assert_equal (LispMachine.run """
+      (Do
+        (- 16 3)
+      )
+    """), 13
+  end
+end
 
 describe "test recursion" do
   it "returns the factorial of the number 10" do
@@ -108,7 +159,7 @@ describe "closures" do
   end
 
   it "closes over variables after execution" do
-    assert_output "10\n15\n" do
+    assert_output "10\n15\n12\n20\n" do
       LispMachine.run """
 
         (Do
@@ -125,7 +176,9 @@ describe "closures" do
           (Let my-adder (Call create-adder 5))
           (Show (Call my-adder 5))
           (Show (Call my-adder 5))
-
+          (Let my-adder-six (Call create-adder 6))
+          (Show (Call my-adder-six 6))
+          (Show (Call my-adder 5))
         )
       """
     end
@@ -189,5 +242,4 @@ describe "continuations" do
     end
   end
 end
-
 

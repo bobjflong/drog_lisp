@@ -1,7 +1,7 @@
 
 require 'drog_lisp/grammar'
 require 'drog_lisp/identifiers'
-
+require 'ostruct'
 require 'continuation'
 
 module LispMachine
@@ -40,6 +40,15 @@ module LispMachine
       if x[2]
         return [x[2]]
       end
+    end
+
+    def self.create_struct_from branch
+      result = OpenStruct.new
+      params = branch.flatten
+      1.upto params.length - 1 do |i|
+        result.send "#{params[i]}=", nil  
+      end
+      result
     end
     
     def self.close_over_variables(branch)
@@ -113,12 +122,10 @@ module LispMachine
 
       #puts "func_find #{func_find}"
       if func_find.kind_of? Continuation and cc
-        #puts "yo 1"
         LispMachine.instance_variable_set('@last_evaluated', args[:args][0])
       end
 
       if func_find.kind_of? Continuation
-        #puts "yo 2"
         func_find.call
         return
       end
@@ -195,10 +202,33 @@ module LispMachine
     elsif Identifier.is_let(branch) then
       LispMachine.interpret([branch[2]])
       LispMachine::SYMBOL_TABLE[-1][branch[1].to_sym] = @last_evaluated
+
+    elsif Identifier.is_set(branch) then
+      LispMachine.interpret [branch[2]]
+      struct = @last_evaluated
+
+      LispMachine.interpret [branch[3]]
+      value = @last_evaluated
+
+      value_to_set = branch[1].match(/[^\-]+$/)[0]
+      if not struct.kind_of? OpenStruct
+        throw :not_a_struct
+      end
+
+      has_entry = struct.marshal_dump.has_key? value_to_set.to_sym
+
+      if not has_entry
+        throw "no_such_value_#{value_to_set}".to_sym
+      end
+
+      struct.send "#{value_to_set}=", value
     
     elsif Identifier.is_const(branch) then
       @last_evaluated = branch[1]
       return @last_evaluated
+    
+    elsif Identifier.is_struct(branch) then
+      @last_evaluated = LanguageHelpers.create_struct_from branch
 
     elsif Identifier.is_callcc(branch) then
       func_to_call = branch[1]
