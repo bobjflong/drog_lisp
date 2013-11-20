@@ -23,12 +23,26 @@ describe "structs" do
   end
   
   it "generates dynamic setters for fields" do 
-    assert_output "#<OpenStruct name=nil, age=21>\n" do
+    assert_output "#<OpenStruct name=\"bob\", age=21>\n" do
       (LispMachine.run """
         (Do
           (Let bob (Struct name age))
           (Set-age bob 21)
+          (Set-name bob 'bob')
           (Show bob)
+        )
+      """)
+    end
+  end
+
+  it "generates dynamic getters for fields" do 
+    assert_output "bob\n" do
+      (LispMachine.run """
+        (Do
+          (Let bob (Struct name age))
+          (Set-age bob 21)
+          (Set-name bob 'bob')
+          (Show (Get-name bob))
         )
       """)
     end

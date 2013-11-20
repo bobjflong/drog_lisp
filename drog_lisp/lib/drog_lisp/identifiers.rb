@@ -2,6 +2,9 @@ module Identifier
   def self.is_a_definition(x)
     x.length > 2 and x[0] == 'def'
   end
+  def self.is_gets(x)
+    x.length > 1 and x[0] == 'gets'
+  end
   def self.is_set(x)
     x.length > 3 and x[0] == 'set'
   end

@@ -3,6 +3,7 @@ require 'drog_lisp/grammar'
 require 'drog_lisp/identifiers'
 require 'ostruct'
 require 'continuation'
+require 'pry'
 
 module LispMachine
   SYMBOL_TABLE = [{
@@ -164,6 +165,19 @@ module LispMachine
 
       return reclosed
     end
+
+    def self.check_for_struct struct, v
+      if not struct.kind_of? OpenStruct
+        throw :not_a_struct
+      end
+
+      has_entry = struct.marshal_dump.has_key? v.to_sym
+
+      if not has_entry
+        throw "no_such_value_#{v}".to_sym
+      end
+
+    end
     
   end
   
@@ -211,17 +225,18 @@ module LispMachine
       value = @last_evaluated
 
       value_to_set = branch[1].match(/[^\-]+$/)[0]
-      if not struct.kind_of? OpenStruct
-        throw :not_a_struct
-      end
-
-      has_entry = struct.marshal_dump.has_key? value_to_set.to_sym
-
-      if not has_entry
-        throw "no_such_value_#{value_to_set}".to_sym
-      end
+      LanguageHelpers.check_for_struct struct, value_to_set
 
       struct.send "#{value_to_set}=", value
+
+    elsif Identifier.is_gets(branch) then
+      LispMachine.interpret [branch[2]]
+      struct = @last_evaluated
+      to_get = branch[1].match(/[^\-]+$/)[0]
+      LanguageHelpers.check_for_struct struct, to_get
+
+      @last_evaluated = struct.send to_get
+
     
     elsif Identifier.is_const(branch) then
       @last_evaluated = branch[1]

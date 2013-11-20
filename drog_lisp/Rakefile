@@ -1,3 +1,10 @@
 task :test do |_|
   exec "ruby test/*.rb"
 end
+
+task :rebuild do |_|
+  `gem uninstall drog_lisp`
+  `gem build drog_lisp.gemspec`
+  `gem install drog_lisp-0.0.1.gem`
+  exec "ruby test/*.rb"
+end

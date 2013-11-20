@@ -19,6 +19,7 @@ module Tokens
   CAR = "car"
   CDR = "cdr"
   LET = "let"
+  GETS = "gets"
   CallCC = "callcc"
 end
 
@@ -46,7 +47,8 @@ class Parser < Whittle::Parser
   rule(:cons => /Cons/).as { |c| c }
   rule(:do => /Do/).as { |d| d }
   rule(:null => /null/).as { |n| n }
- 
+  
+  rule(:gets => /Get\-[a-zA-Z\-]+/).as { |g| g }
   rule(:set => /Set\-[a-zA-Z\-]+/).as { |s| s }
   #call a func with a list of args
   rule(:call => /Call/).as { |c| c }
@@ -55,7 +57,13 @@ class Parser < Whittle::Parser
   rule(:if => /If/).as { |i| i }
   rule(:show => /Show/).as { |s| s }
   rule(:name => /[a-zA-Z\-]+/).as { |n| n }
-  rule(:const => /[0-9]+/).as { |n| n.to_i }
+  rule(:const => /([0-9]+)|(\'[a-zA-Z\-]*\')/).as do |n| 
+    if not n[0] == "'" then
+      n.to_i
+    else
+      n[1..-2]
+    end
+  end
   
   rule(:expr) do |r|
     r["(", :do, :expression_list, ")"].as { |_,_,a,_| a }
@@ -98,6 +106,10 @@ class Parser < Whittle::Parser
     
     r["(", :struct, :param_list, ")"].as do |_,_,p|
       [ Tokens::STRUCT, p ]
+    end
+
+    r["(", :gets, :deducted_value, ")"].as do |_,g,v|
+      [ Tokens::GETS, g, v ]
     end
     
     r["(", :call, :name, :argument_list, ")"].as do |_,_,n,a|
