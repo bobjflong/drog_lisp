@@ -95,7 +95,7 @@ LispMachine.run """
 
 (Do
 
-  (Func create-adder start void)
+  (Func create-adder start)
     (Do
       (Let x start)
       (Func adder val ~(x))
