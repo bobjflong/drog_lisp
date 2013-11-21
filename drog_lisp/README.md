@@ -184,3 +184,19 @@ LispMachine.run """
 #> 3
 #> 4
 ```
+
+######Structs
+
+Setters & getter functions handled dynamically
+
+```ruby
+LispMachine.run """
+
+(Do
+  (Let bob (Struct name age))
+    (Set-age bob 21)
+    (Set-name bob 'bob')
+    (Show (Get-name bob))
+)
+"""
+```
