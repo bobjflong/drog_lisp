@@ -6,7 +6,8 @@ Embedded functional language for Ruby --- resembles scheme/lisp but with unique 
 ######Recursive factorial:
 
 ```ruby
-load 'machine.rb'
+require 'drog_lisp'
+
 number = 10
 puts LispMachine.run """
 (Do
