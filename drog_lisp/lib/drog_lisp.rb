@@ -6,9 +6,7 @@ require 'continuation'
 require 'pry'
 
 module LispMachine
-  SYMBOL_TABLE = [{
-    :m => 4
-  }]
+  SYMBOL_TABLE = [{ }]
   
   @last_evaluated
   
@@ -36,10 +34,19 @@ module LispMachine
   end
     
   module LanguageHelpers
+   
+    POSITION_OF_ARG_SIMPLE_0 = 1
+    POSITION_OF_ARG_SIMPLE_1 = 2
+
+    POSITION_OF_ARGS_IN_DEFINITION = 2
+    POSITION_OF_CLOSED_OVER_VARIABLES = 3
+
+    # Start of args in function call
+    POSITION_OF_COMPLEX_ARGS_START = 2
+    
     def self.extract_args_from_definition(x)
-      #puts "def = #{x}"
-      if x[2]
-        return [x[2]]
+      if x[POSITION_OF_ARGS_IN_DEFINITION] 
+        return [x[POSITION_OF_ARGS_IN_DEFINITION]] 
       end
     end
 
@@ -53,7 +60,7 @@ module LispMachine
     end
     
     def self.close_over_variables(branch)
-      closed_over = branch[3]
+      closed_over = branch[POSITION_OF_CLOSED_OVER_VARIABLES]
       saved_as = {}
       if (closed_over)
         [closed_over].flatten.each do |var|
@@ -67,10 +74,10 @@ module LispMachine
     def self.extract_simple_args(branch)
       
       res = []
-      LispMachine::interpret([branch[1]])
+      LispMachine::interpret([branch[POSITION_OF_ARG_SIMPLE_0]])
       res << LispMachine.instance_variable_get('@last_evaluated')
       
-      LispMachine::interpret([branch[2]])
+      LispMachine::interpret([branch[POSITION_OF_ARG_SIMPLE_1]])
       res << LispMachine.instance_variable_get('@last_evaluated')
       
       return res
@@ -81,11 +88,11 @@ module LispMachine
       result = {
         func_name: branch[1]
       }
-      if (branch.length > 2) then
+      if (branch.length > POSITION_OF_COMPLEX_ARGS_START) then
         args = []
         
         flattened = branch#.flatten(1)
-        2.upto(branch.length - 1).each do |i|
+        POSITION_OF_COMPLEX_ARGS_START.upto(branch.length - 1).each do |i|
           wrapper = [branch[i]]
           LispMachine.interpret wrapper
           
@@ -131,8 +138,6 @@ module LispMachine
         return
       end
         
-      #puts "here #{func_find} #{@las}"
-
       if not func_find or func_find[:type] != 'definition'
         throw :no_such_function
       else
@@ -334,12 +339,8 @@ module LispMachine
     elsif Identifier.is_call(branch)
       args = LanguageHelpers.extract_complex_args_func_call(branch)
       LanguageHelpers.map_params_for_function(args)
-    #  puts "AFTER CALL #{@last_evaluated}"
     end
    
-    ####puts "\nlast evaluated = #{@last_evaluated}"
-    ####puts LispMachine::SYMBOL_TABLE
-    #####puts "\ncontinuing with #{tree[1]}\n"
     LispMachine.interpret(tree[1])
   end
 end
