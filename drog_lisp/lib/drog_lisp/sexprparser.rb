@@ -50,11 +50,15 @@ class SexprParser
   end
 
   def find_sexprs
+    threads = []
     @text.each_with_index do |v, i|
       if v == '('
-        find_matching_bracket i
+        threads << Thread.new do
+          find_matching_bracket i
+        end
       end
     end
+    threads.each { |t| t.join }
   end
 end
 
