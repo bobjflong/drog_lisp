@@ -155,7 +155,9 @@ class Parser < Whittle::Parser
     end
     
     r[:name].as { |n| [Tokens::GET, n] }
-    r[:const].as { |c| [Tokens::CONST, c] }
+    r["(", :name, ")"].as { |_,n| [Tokens::GET, n] }
+    r[:const].as { |c| [Tokens::CONST, c] } 
+    r["(", :const, ")"].as { |_,c| [Tokens::CONST, c] }
     r[:null].as { |_| nil }
   end
   

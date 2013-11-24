@@ -1,4 +1,59 @@
 
+require 'thread'
+require 'sxp'
+
+class LispMacro
+ 
+  attr_reader :name
+  attr_reader :handler
+
+  def initialize(name, &block)
+    @name = name
+    @handler = block
+  end
+
+  def handle ast, split
+    result = @handler.call ast
+    split.replace_with result
+  end
+end
+
+class StringSplit < Struct.new(:string, :position)
+    def replace_with str
+      string[position.start..position.end] = str
+    end
+end
+
+class MacroList
+  attr_reader :macros
+
+  def initialize(macros)
+    @macros = macros
+  end
+
+  def matching name
+    MacroList.new(@macros.find_all { |m| m.name == name.to_s })
+  end
+
+  def call ast, split
+    @macros.each { |m| m.handle ast, split }
+  end
+end
+
+module LispPreprocessor
+  
+  def self.preprocess prog, macros
+    possible_macro_extractor = SexprParser.new prog
+    possible_macro_extractor.find_sexprs
+    possible_macro_extractor.parsed.each_with_index do |v, i|
+      parsed = SXP.read v
+      matching_macros = macros.matching parsed[0]
+      split = StringSplit.new prog, possible_macro_extractor.positions[i]
+      matching_macros.call parsed, split
+    end
+  end
+end
+
 # This class extracts all of the s-expressions from a drog_lisp program
 # This is used for macro expansion
 class SexprParser
@@ -11,20 +66,24 @@ class SexprParser
     @raw = text
     @parsed = []
     @positions = []
+    @mutex = Mutex.new
   end
 
   def find_matching_bracket i
     i = i + 1
     start = i - 1
     count = 1
+    
     while true
       next_val = @text[i]
       if next_val == ')'
 
         count -= 1
         if count == 0
-          @parsed << @raw[start.. i]
-          @positions << Position.new(start, i)
+          @mutex.synchronize do
+            @parsed << @raw[start..i]
+            @positions << Position.new(start, i)
+          end
           return
         end
       end

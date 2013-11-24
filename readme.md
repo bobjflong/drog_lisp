@@ -201,3 +201,45 @@ LispMachine.run """
 )
 """
 ```
+
+######Macros
+
+drog\_lisp includes an optional preprocessor that lets you design your own syntactic constructs. In this example I produce a scheme-like "let", which shifts and binds values into scope for a block. See a similar example at http://en.wikipedia.org/wiki/Scheme_(programming_language)#Minimalism. Note that this example is different to the primitive Let function in drog_lisp (which explictly writes a variable to the symbol table).
+
+```ruby
+require 'drog_lisp/sexprparser'
+
+letin = LispMacro.new 'letin' do |ast|
+      
+  body = ast[-1].to_sxp
+  
+  func_params = ''
+  func_args   = ''
+  
+  ast[1..-2].each do |param|
+    func_params += "#{param[0].to_sxp} "
+    func_args += "#{param[1].to_sxp} "
+  end
+  
+  %Q(
+    (Func tmp #{func_params})
+      #{body}
+  
+    (Call tmp #{func_args})
+  )
+end
+
+prog = %Q(
+  (Do
+    (letin (a 1) (b 2) (Do (Show (+ a b))))
+  )
+)
+
+
+LispPreprocessor.preprocess prog, MacroList.new([letin])
+LispMachine.run prog
+
+#=> 3
+
+
+```
