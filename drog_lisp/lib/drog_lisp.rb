@@ -45,9 +45,7 @@ module LispMachine
     POSITION_OF_COMPLEX_ARGS_START = 2
     
     def self.extract_args_from_definition(x)
-      if x[POSITION_OF_ARGS_IN_DEFINITION] 
-        return [x[POSITION_OF_ARGS_IN_DEFINITION]] 
-      end
+      return [x[POSITION_OF_ARGS_IN_DEFINITION]] 
     end
 
     def self.create_struct_from branch
