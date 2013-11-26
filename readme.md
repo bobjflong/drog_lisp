@@ -243,3 +243,24 @@ LispMachine.run prog
 
 
 ```
+
+######Code as data
+
+Build up your own expressions as data, then execute them:
+
+```ruby
+LispMachine.run """
+    
+(Do
+  (Let operator '+)
+  (Let my-calc (Cons operator (Cons 1 2)))
+  (Evaluate my-calc)
+)
+    
+"""
+
+#=> 3
+```
+
+
+

@@ -1,5 +1,6 @@
 
 require 'whittle'
+require 'sxp'
 
 module Tokens
   ADD = "+"
@@ -21,6 +22,8 @@ module Tokens
   LET = "let"
   GETS = "gets"
   CallCC = "callcc"
+  QUOTE = "quote"
+  EVALUATE = "evaluate"
 end
 
 class Parser < Whittle::Parser
@@ -48,15 +51,18 @@ class Parser < Whittle::Parser
   rule(:do => /Do/).as { |d| d }
   rule(:null => /null/).as { |n| n }
   
+  rule(:evaluate => /Evaluate/).as { |e| e }
   rule(:gets => /Get\-[a-zA-Z\-]+/).as { |g| g }
   rule(:set => /Set\-[a-zA-Z\-]+/).as { |s| s }
   #call a func with a list of args
   rule(:call => /Call/).as { |c| c }
   rule(:struct => /Struct/).as { |s| s }
+  rule(:quote => /\'/).as { |q| q }
   rule(:let => /Let/).as { |l| l }
   rule(:if => /If/).as { |i| i }
   rule(:show => /Show/).as { |s| s }
   rule(:name => /[a-zA-Z\-]+/).as { |n| n }
+  rule(:reserved => /[\+\-\\\*]/).as { |n| n }
   rule(:const => /([0-9]+)|(\'[a-zA-Z\-]*\')/).as do |n| 
     if not n[0] == "'" then
       n.to_i
@@ -103,6 +109,10 @@ class Parser < Whittle::Parser
   end
   
   rule(:deducted_value) do |r|
+
+    r["(", :evaluate, :deducted_value, ")"].as do |_,_,d|
+      [ Tokens::EVALUATE, d]
+    end
     
     r["(", :struct, :param_list, ")"].as do |_,_,p|
       [ Tokens::STRUCT, p ]
@@ -159,8 +169,18 @@ class Parser < Whittle::Parser
     r[:const].as { |c| [Tokens::CONST, c] } 
     r["(", :const, ")"].as { |_,c| [Tokens::CONST, c] }
     r[:null].as { |_| nil }
+
+    r[:quoted].as { |q| q }
+    
   end
-  
+
+  rule(:quoted) do |r|
+    #allow some operators
+    r[:quote, :add].as { |_,x| [Tokens::QUOTE, SXP.read(x)] } 
+    r[:quote, :sub].as { |_,x| [Tokens::QUOTE, SXP.read(x)] }
+    r[:quote, :mul].as { |_,x| [Tokens::QUOTE, SXP.read(x)] } 
+    r[:quote, :name].as {|_,x| [Tokens::QUOTE, SXP.read(x)] }
+  end
   
   rule(:param_list) do |r|
     r[:name, :param_list].as { |n, a| ([n] + [a]) }

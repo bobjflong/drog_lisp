@@ -257,3 +257,39 @@ describe "continuations" do
   end
 end
 
+describe "symbols" do
+  it "allows symbols to be created using a quote syntax" do
+    assert_equal (LispMachine.run """
+    
+    (Do
+      'x
+    )
+  
+    """), :x
+  end
+
+  it "allows code as data to be built up" do
+    assert_equal (LispMachine.run """
+      
+    (Do
+      (Let operator '+)
+      (Cons operator (Cons 1 2))
+
+    )
+
+    """), [:+, 1, 2]
+  end
+
+  it "allows code as data to be executed" do
+    assert_equal (LispMachine.run """
+    
+    (Do
+      (Let operator '+)
+      (Let my-calc (Cons operator (Cons 1 2)))
+      (Evaluate my-calc)
+    )
+    
+    """), 3
+  end
+
+end

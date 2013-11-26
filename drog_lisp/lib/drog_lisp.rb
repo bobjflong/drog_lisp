@@ -143,7 +143,6 @@ module LispMachine
       else
         
         # Begin the mapping by creating a new scope
-
         LispMachine::push_scope()
         
         func_find[:arguments].flatten.each_with_index do |a, i|
@@ -216,8 +215,11 @@ module LispMachine
       
       @last_evaluated = LispMachine::SYMBOL_TABLE[-1][branch[1].to_sym]
       
-    #  puts "symbol = #{LispMachine::SYMBOL_TABLE[-1][branch[1].to_sym]}"
-    
+    elsif Identifier.is_evaluate(branch) then
+      LispMachine.interpret [branch[1]]
+      sexp = [:Do, @last_evaluated].to_sxp
+      LispMachine.run sexp
+
     elsif Identifier.is_let(branch) then
       LispMachine.interpret([branch[2]])
       LispMachine::SYMBOL_TABLE[-1][branch[1].to_sym] = @last_evaluated
@@ -241,7 +243,9 @@ module LispMachine
       LanguageHelpers.check_for_struct struct, to_get
 
       @last_evaluated = struct.send to_get
-
+  
+    elsif Identifier.is_quote(branch) then
+      @last_evaluated = branch[1].to_sym
     
     elsif Identifier.is_const(branch) then
       @last_evaluated = branch[1]
@@ -266,7 +270,6 @@ module LispMachine
       @last_evaluated = lookup(LispMachine::SYMBOL_TABLE.length-1, branch[1])
 
     elsif Identifier.is_a_show(branch) then
-      #puts LispMachine::SYMBOL_TABLE
       LispMachine.interpret([branch[1]])
       if @last_evaluated.kind_of? Array and @last_evaluated.length > 1
         if @last_evaluated[0] == 'const'
@@ -301,8 +304,6 @@ module LispMachine
       LispMachine::interpret([branch[2]])
       right = @last_evaluated
       
-      ###puts "CONS: #{left} #{right}"
-            
       if not right
         @last_evaluated = left
       else
@@ -318,10 +319,8 @@ module LispMachine
       end
     
     elsif Identifier.is_mul(branch) then
-      ####puts "#{branch[1]} * #{branch[2]}"
       args = LanguageHelpers.extract_simple_args(branch)
       @last_evaluated = args[0].to_i * args[1].to_i
-      ####puts "AFTER MUL, @last_evaluated = #{@last_evaluated}"
     
     elsif Identifier.is_an_adder(branch) then
       args = LanguageHelpers.extract_simple_args(branch)
@@ -333,7 +332,6 @@ module LispMachine
 
     elsif Identifier.is_eq(branch) then
       args = LanguageHelpers.extract_simple_args(branch)
-      ###puts "EQ: #{args}"
       @last_evaluated = args[0] == args[1]
     
     elsif Identifier.is_call(branch)
