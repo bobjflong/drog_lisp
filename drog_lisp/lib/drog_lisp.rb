@@ -10,6 +10,9 @@ module LispMachine
   
   @last_evaluated
   
+  # Information about tail call optimization
+  @tail_call
+  
   # Helper method to run embedded programs quickly
   def self.run(prog)
     parsed = Parser.new.parse prog
@@ -156,10 +159,30 @@ module LispMachine
 
       end
     end
+
+    # remap variables without a new function call
+    # (used for tail call optimization)
+    def self.replace_args_for_function(branch, args = extract_complex_args_func_call(LanguageHelpers.tail_call))
+      branch[:arguments].flatten.each_with_index do |a, i|
+        LispMachine::SYMBOL_TABLE[-1]["#{a}".to_sym] = args[:args][i]
+      end
+      LispMachine.instance_variable_set '@tail_call', nil
+    end
+
+    def self.tail_call
+      LispMachine.instance_variable_get '@tail_call'
+    end
     
     def self.pass_execution_to_function(branch)
-      LispMachine.interpret(branch[:contents])
-
+      # trampoline the function call to support tail call optimization
+      while true
+        LispMachine.interpret(branch[:contents])
+        if LanguageHelpers.tail_call
+          LanguageHelpers.replace_args_for_function branch
+        else
+          break
+        end
+      end
       # Gather new closed values
       reclosed = LanguageHelpers.save_closed_variables_from_scope branch[:closed_over]
 
@@ -354,10 +377,8 @@ module LispMachine
       @last_evaluated = args[0] == args[1]
 
     elsif Identifier.is_reccall(branch)
-      args = LanguageHelpers.extract_complex_args_func_call(branch)
-      LispMachine::pop_scope()
-      LanguageHelpers.map_params_for_function(args)
-    
+      LispMachine.instance_variable_set '@tail_call', branch
+
     elsif Identifier.is_call(branch)
       args = LanguageHelpers.extract_complex_args_func_call(branch)
       LanguageHelpers.map_params_for_function(args)
