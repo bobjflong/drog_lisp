@@ -11,6 +11,7 @@ module Tokens
   GET = "get"
   SHOW = "show"
   LT = "<"
+  LOOPUNTIL = "loopuntil"
   IF = "if"
   MUL = "*"
   SUB = "-"
@@ -24,6 +25,7 @@ module Tokens
   CallCC = "callcc"
   QUOTE = "quote"
   EVALUATE = "evaluate"
+  RECCALL = "reccall"
 end
 
 class Parser < Whittle::Parser
@@ -50,11 +52,12 @@ class Parser < Whittle::Parser
   rule(:cons => /Cons/).as { |c| c }
   rule(:do => /Do/).as { |d| d }
   rule(:null => /null/).as { |n| n }
-  
+  rule(:loopuntil => /LoopUntil/).as { |l| l }  
   rule(:evaluate => /Evaluate/).as { |e| e }
   rule(:gets => /Get\-[a-zA-Z\-]+/).as { |g| g }
   rule(:set => /Set\-[a-zA-Z\-]+/).as { |s| s }
   #call a func with a list of args
+  rule(:reccall => /RecCall/).as { |c| c }
   rule(:call => /Call/).as { |c| c }
   rule(:struct => /Struct/).as { |s| s }
   rule(:quote => /\'/).as { |q| q }
@@ -91,6 +94,10 @@ class Parser < Whittle::Parser
     r["(", :let, :name, :deducted_value, ")"].as do |_,_,n,v,_|
       [ Tokens::LET, n, v ]
     end
+
+    r["(", :loopuntil, :deducted_value, :expr, ")"].as do |_,_,v,e|
+      [ Tokens::LOOPUNTIL, v, e]
+    end
  
     r["(", :show, :inner_expr, ")"].as do |_,_,n,_|
       [Tokens::SHOW, n ]
@@ -121,9 +128,23 @@ class Parser < Whittle::Parser
     r["(", :gets, :deducted_value, ")"].as do |_,g,v|
       [ Tokens::GETS, g, v ]
     end
-    
+
+    #refactor
     r["(", :call, :name, :argument_list, ")"].as do |_,_,n,a|
       result = [Tokens::CALL, n]
+      if a.length > 0 and not a[0].kind_of? Array
+        #single element arg list
+        a = [a]
+      end
+      a.each do |p|
+        result << p
+      end
+      result
+    end
+
+
+    r["(", :reccall, :name, :argument_list, ")"].as do |_,_,n,a|
+      result = [Tokens::RECCALL, n]
       if a.length > 0 and not a[0].kind_of? Array
         #single element arg list
         a = [a]

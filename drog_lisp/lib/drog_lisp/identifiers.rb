@@ -8,6 +8,9 @@ module Identifier
   def self.is_evaluate(x)
     x.length > 1 and x[0] == 'evaluate'
   end
+  def self.is_loopuntil(x)
+    x.length > 2 and x[0] == 'loopuntil'
+  end
   def self.is_gets(x)
     x.length > 1 and x[0] == 'gets'
   end
@@ -33,6 +36,9 @@ module Identifier
     x.length > 2 and x[0] == 'call'
   end
   
+  def self.is_reccall(x)
+    x.length > 2 and x[0] == 'reccall'
+  end
   def self.is_a_getter(x)
     x.length > 1 and x[0] == 'get'
   end

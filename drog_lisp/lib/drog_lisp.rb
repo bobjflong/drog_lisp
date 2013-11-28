@@ -182,6 +182,19 @@ module LispMachine
     end
     
   end
+
+  def self.interpret_std(tree)
+    begin
+    while true
+      tree = interpret_std tree
+      break unless tree
+      break unless tree.kind_of? Array
+    end
+    rescue SystemStackError
+      puts $!
+      puts caller[0..100]
+    end
+  end
   
   def self.interpret(tree)
     
@@ -266,6 +279,14 @@ module LispMachine
     
     elsif Identifier.is_a_getter(branch) then 
       @last_evaluated = lookup(LispMachine::SYMBOL_TABLE.length-1, branch[1])
+    
+    elsif Identifier.is_loopuntil(branch) then
+      cond = branch[1]
+      LispMachine::interpret [cond]
+      while not @last_evaluated
+        LispMachine::interpret branch[2]
+        LispMachine::interpret [cond]
+      end
 
     elsif Identifier.is_a_show(branch) then
       LispMachine.interpret([branch[1]])
@@ -331,6 +352,11 @@ module LispMachine
     elsif Identifier.is_eq(branch) then
       args = LanguageHelpers.extract_simple_args(branch)
       @last_evaluated = args[0] == args[1]
+
+    elsif Identifier.is_reccall(branch)
+      args = LanguageHelpers.extract_complex_args_func_call(branch)
+      LispMachine::pop_scope()
+      LanguageHelpers.map_params_for_function(args)
     
     elsif Identifier.is_call(branch)
       args = LanguageHelpers.extract_complex_args_func_call(branch)
@@ -338,5 +364,6 @@ module LispMachine
     end
    
     LispMachine.interpret(tree[1])
+  #  return tree[1]
   end
 end

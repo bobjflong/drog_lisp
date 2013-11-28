@@ -49,6 +49,24 @@ describe "structs" do
   end
 end
 
+describe "loops" do
+  it "can do basic loops" do
+    assert_output "0\n1\n2\n3\n" do
+      LispMachine.run """
+      (Do
+        (Let x 0)
+        (LoopUntil (= x 4)
+          (Do
+            (Show x)
+            (Let x (+ x 1))
+          )
+        )
+      )
+      """
+    end
+  end
+end
+
 describe "basic arithmetic" do
   it "can add numbers" do
     assert_equal (LispMachine.run """
