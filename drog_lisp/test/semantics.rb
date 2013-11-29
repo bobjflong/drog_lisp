@@ -67,6 +67,25 @@ describe "loops" do
   end
 end
 
+describe "tail optimization" do
+  it "can handle crazy levels of recursion" do
+    assert_output "done\n" do
+      LispMachine.run """
+      (Do
+        (Func loop x)
+          (Do
+            (If (= x 100000)
+              (Show 'done')
+              (RecCall loop (+ x 1))
+            )
+          )
+        (Call loop 0)
+      )
+      """
+    end
+  end
+end
+
 describe "basic arithmetic" do
   it "can add numbers" do
     assert_equal (LispMachine.run """
