@@ -206,19 +206,6 @@ module LispMachine
     
   end
 
-  def self.interpret_std(tree)
-    begin
-    while true
-      tree = interpret_std tree
-      break unless tree
-      break unless tree.kind_of? Array
-    end
-    rescue SystemStackError
-      puts $!
-      puts caller[0..100]
-    end
-  end
-  
   def self.interpret(tree)
     
     return unless tree    

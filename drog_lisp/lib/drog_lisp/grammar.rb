@@ -28,6 +28,21 @@ module Tokens
   RECCALL = "reccall"
 end
 
+module GrammarHelpers
+  
+  def self.gather_arguments result, a
+    if a.length > 0 and not a[0].kind_of? Array
+      #single element arg list
+      a = [a]
+    end
+    a.each do |p|
+      result << p
+    end
+    result
+  end
+
+end
+
 class Parser < Whittle::Parser
   
 
@@ -132,27 +147,13 @@ class Parser < Whittle::Parser
     #refactor
     r["(", :call, :name, :argument_list, ")"].as do |_,_,n,a|
       result = [Tokens::CALL, n]
-      if a.length > 0 and not a[0].kind_of? Array
-        #single element arg list
-        a = [a]
-      end
-      a.each do |p|
-        result << p
-      end
-      result
+      GrammarHelpers::gather_arguments result, a 
     end
 
 
     r["(", :reccall, :name, :argument_list, ")"].as do |_,_,n,a|
       result = [Tokens::RECCALL, n]
-      if a.length > 0 and not a[0].kind_of? Array
-        #single element arg list
-        a = [a]
-      end
-      a.each do |p|
-        result << p
-      end
-      result
+      GrammarHelpers::gather_arguments result, a 
     end
 
     r["(", :callcc, :name, ")"].as do |_,_,v|

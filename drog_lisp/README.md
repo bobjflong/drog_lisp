@@ -262,5 +262,25 @@ LispMachine.run """
 #=> 3
 ```
 
+######Tail call optimization
+
+You can instruct the interpreter to run your recursive definitions as a loop using the <code>RecCall</code> directive. This means that you won't run into stack overflows with deep recursion. Of course in order for this to work correctly the <code>RecCall</code> must be the last action of your function.
+
+```ruby
+LispMachine.run """
+(Do
+  (Func loop x)
+    (Do
+      (If (= x 100000)
+        (Show 'done')
+        (RecCall loop (+ x 1))
+      )
+    )
+  (Call loop 0)
+)
+"""
+
+#=> done.
+```
 
 
