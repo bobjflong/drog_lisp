@@ -25,6 +25,9 @@ Gem::Specification.new do |s|
 
   s.require_path = 'lib'
 
+  s.add_runtime_dependency 'whittle'
+  s.add_runtime_dependency 'sxp'
+
   # For C extensions
   # s.extensions = "ext/extconf.rb"
 end
