@@ -229,14 +229,11 @@ module LispMachine
     
     branch = tree[0]
     
-    ####puts "BRANCH IS #{branch}"
-    
     if branch.nil? 
       @last_evaluated = nil
       return @last_evaluated
     end
     
-    ####puts "Branch = #{branch}"
     return unless branch
     
     # ["def", "f", ["+", 1, 2]], ["+", 1, 2]
