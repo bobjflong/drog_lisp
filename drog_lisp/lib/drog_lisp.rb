@@ -51,6 +51,17 @@ module LispMachine
       return [x[POSITION_OF_ARGS_IN_DEFINITION]] 
     end
 
+    def self.process_message branch
+      LispMachine.interpret [branch[1]]
+      message = LispMachine.instance_variable_get '@last_evaluated'
+
+      LispMachine.interpret [branch[2]]
+      receiver = LispMachine.instance_variable_get '@last_evaluated'
+      
+      result = receiver.send message.to_sym
+      LispMachine.instance_variable_set '@last_evaluated', result
+    end
+
     def self.create_struct_from branch
       result = OpenStruct.new
       params = branch.flatten
@@ -244,7 +255,10 @@ module LispMachine
     elsif Identifier.is_let(branch) then
       LispMachine.interpret([branch[2]])
       LispMachine::SYMBOL_TABLE[-1][branch[1].to_sym] = @last_evaluated
-
+    
+    elsif Identifier.is_send(branch) then
+      LanguageHelpers.process_message branch
+  
     elsif Identifier.is_set(branch) then
       LispMachine.interpret [branch[2]]
       struct = @last_evaluated

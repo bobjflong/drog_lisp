@@ -283,4 +283,18 @@ LispMachine.run """
 #=> done.
 ```
 
+######Communicating with ruby objects
+
+Use Send to send messages to underlying Ruby objects.
+
+```ruby
+len = LispMachine.run """
+(Do
+  (Let list (Cons 1 (Cons 2 (Cons 3 (Cons 4 5)))))
+  (Let answer (Send 'length list))
+)
+"""
+
+# len = 5
+```
 

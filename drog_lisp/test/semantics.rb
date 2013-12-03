@@ -330,3 +330,15 @@ describe "symbols" do
   end
 
 end
+
+describe "message sending" do
+  it "should be able to communicate with ruby native types" do
+    assert_equal (LispMachine.run """
+    (Do
+      (Let list (Cons 1 (Cons 2 (Cons 3 (Cons 4 5)))))
+      (Let answer (Send 'length list))
+    )
+  
+    """), 5
+  end
+end

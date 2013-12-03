@@ -5,6 +5,9 @@ module Identifier
   def self.is_quote(x)
     x.length > 1 and x[0] == 'quote'
   end
+  def self.is_send(x)
+    x.length > 2 and x[0] == 'send'
+  end
   def self.is_evaluate(x)
     x.length > 1 and x[0] == 'evaluate'
   end

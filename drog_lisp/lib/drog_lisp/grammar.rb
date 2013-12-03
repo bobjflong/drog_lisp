@@ -3,6 +3,7 @@ require 'whittle'
 require 'sxp'
 
 module Tokens
+  SEND = "send"
   ADD = "+"
   DEFINE = "def"
   SET = "set"
@@ -76,6 +77,7 @@ class Parser < Whittle::Parser
   rule(:call => /Call/).as { |c| c }
   rule(:struct => /Struct/).as { |s| s }
   rule(:quote => /\'/).as { |q| q }
+  rule(:send => /Send/).as { |s| s }
   rule(:let => /Let/).as { |l| l }
   rule(:if => /If/).as { |i| i }
   rule(:show => /Show/).as { |s| s }
@@ -138,6 +140,10 @@ class Parser < Whittle::Parser
     
     r["(", :struct, :param_list, ")"].as do |_,_,p|
       [ Tokens::STRUCT, p ]
+    end
+
+    r["(", :send, :deducted_value, :deducted_value, ")"].as do |_,_,m,v|
+      [ Tokens::SEND, m ,v]
     end
 
     r["(", :gets, :deducted_value, ")"].as do |_,g,v|
