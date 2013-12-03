@@ -342,3 +342,32 @@ describe "message sending" do
     """), 5
   end
 end
+
+describe "preloading objects" do
+  it "allows objects to be loaded before execution" do
+    
+    class Dog
+      def bark
+        puts "woof"
+      end
+    end
+  
+    jim = Dog.new
+
+    assert_output "woof\n" do
+   
+      LispMachine.preload({ mydog: jim })
+      
+      LispMachine.run """
+      (Do
+        (Send 'bark mydog)
+      )
+      """
+    end
+
+  end
+end
+
+
+
+

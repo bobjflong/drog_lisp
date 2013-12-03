@@ -19,6 +19,12 @@ module LispMachine
     LispMachine::interpret(parsed)
     LispMachine.instance_variable_get('@last_evaluated')
   end
+
+  def self.preload(attrs)
+    attrs.each do |k,v|
+      LispMachine::SYMBOL_TABLE[0][k] = v
+    end
+  end
   
   def self.lookup(scope, x)
     scope.downto(0).each do |level|

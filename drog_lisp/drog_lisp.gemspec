@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.summary           = "Embedded functional language for Ruby"
   s.description       = "Resembles Lisp or Scheme but with unqiue semantics. Supports first-class functions, continuations, recursion etc."
   s.rubyforge_project = s.name
-
+  s.license = 'MIT'
   s.required_rubygems_version = ">= 1.3.6"
 
   # If you have runtime dependencies, add them here
