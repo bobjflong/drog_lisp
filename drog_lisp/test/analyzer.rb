@@ -32,6 +32,7 @@ describe "if analysis" do
  it "should turn a call into a function" do
   LispMachine.instance_variable_set('@last_evaluated', nil)
   LispMachine::SYMBOL_TABLE[0][:ten] = 10
+  LispMachine::SYMBOL_TABLE[0][:z] = 3
   
   LispMachine::SYMBOL_TABLE[0][:f] = {
     type: 'definition',
@@ -40,14 +41,14 @@ describe "if analysis" do
     name: :f
   }
 
-  call_expr = ["call", "f", ["const", 30], ["const", 40]]
+  call_expr = ["call", "f", ["const", 5], ["const", 40]]
 
   analyzer = Analyzer.new
   analyzed = analyzer.dispatch call_expr
   assert analyzed.kind_of? Proc
 
   analyzed.call
-  assert_equal LispMachine.instance_variable_get('@last_evaluated'), 3
+  assert_equal LispMachine.instance_variable_get('@last_evaluated'), 40
 
  end
   

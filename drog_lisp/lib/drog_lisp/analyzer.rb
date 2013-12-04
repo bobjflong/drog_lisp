@@ -4,12 +4,23 @@ require 'pry'
 
 class Analyzer
 
-  def dispatch branch
-    if branch[0] == '<'
-      self.send :analyze_lt, branch
+  def initialize
+    @replace_ops_dictionary = {
+      '<' => 'lt'
+    }
+  end
+
+  def replace_ops op
+    if @replace_ops_dictionary.has_key? op
+      @replace_ops_dictionary[op]
     else
-      self.send("analyze_#{branch[0]}".to_sym, branch)
+      op
     end
+  end
+
+  def dispatch branch
+    directive = replace_ops branch[0]
+    self.send("analyze_#{directive}".to_sym, branch)
   end
 
   def set_last_evaluated ans

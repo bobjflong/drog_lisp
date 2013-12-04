@@ -166,7 +166,7 @@ module LispMachine
         func_find[:arguments].flatten.each_with_index do |a, i|
           LispMachine::SYMBOL_TABLE[-1]["#{a}".to_sym] = args[:args][i]
         end
-        
+
         LanguageHelpers.push_closed_variables_to_scope(func_find[:closed_over])
         reclosed = LanguageHelpers.pass_execution_to_function func_find
 
@@ -309,7 +309,7 @@ module LispMachine
 
       end
     
-    elsif Identifier.is_a_getter(branch) then 
+    elsif Identifier.is_a_getter(branch) then
       @last_evaluated = lookup(LispMachine::SYMBOL_TABLE.length-1, branch[1])
     
     elsif Identifier.is_loopuntil(branch) then
