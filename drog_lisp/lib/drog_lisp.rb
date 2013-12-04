@@ -234,6 +234,11 @@ module LispMachine
       return @last_evaluated
     end
     
+    if branch.length == 1
+      @last_evaluated = branch[0]
+      return @last_evaluated
+    end
+    
     return unless branch
     
     # ["def", "f", ["+", 1, 2]], ["+", 1, 2]

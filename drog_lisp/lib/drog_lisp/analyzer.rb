@@ -22,10 +22,18 @@ class Analyzer
     end
   end
 
+  def analyze_void(branch)
+    Proc.new { nil }
+  end
+
   def analyze_get(branch)
     Proc.new do
       set_last_evaluated(LispMachine.lookup(LispMachine::SYMBOL_TABLE.length-1, branch[1]))
     end
+  end
+
+  def analyze_const(branch)
+    Proc.new { set_last_evaluated branch[1] }
   end
 
   def analyze_if branch
@@ -38,6 +46,29 @@ class Analyzer
       else
         right.call
       end
+    end
+  end
+
+  def analyze_call branch
+    #map the arguments to lambdas that will give us the argument
+    analyzed_args = branch[2..-1].map do |a|
+      dispatch a
+    end
+    Proc.new do
+
+      arguments_to_pass = analyzed_args.map do |a|
+        a.call
+        LispMachine.instance_variable_get '@last_evaluated'
+      end
+
+      branch[2..-1] = arguments_to_pass
+
+      arguments_for_function_call = {
+        func_name: branch[1],
+        args: arguments_to_pass 
+      }
+
+      LispMachine::LanguageHelpers.map_params_for_function arguments_for_function_call
     end
   end
 end

@@ -28,4 +28,27 @@ describe "if analysis" do
 
 
  end
+
+ it "should turn a call into a function" do
+  LispMachine.instance_variable_set('@last_evaluated', nil)
+  LispMachine::SYMBOL_TABLE[0][:ten] = 10
+  
+  LispMachine::SYMBOL_TABLE[0][:f] = {
+    type: 'definition',
+    contents: [["if", ["<", ["get", "x"], ["get", "ten"]], ["get", "y"], ["get", "z"]]],
+    arguments: ['x','y'],
+    name: :f
+  }
+
+  call_expr = ["call", "f", ["const", 30], ["const", 40]]
+
+  analyzer = Analyzer.new
+  analyzed = analyzer.dispatch call_expr
+  assert analyzed.kind_of? Proc
+
+  analyzed.call
+  assert_equal LispMachine.instance_variable_get('@last_evaluated'), 3
+
+ end
+  
 end
