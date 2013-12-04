@@ -33,6 +33,15 @@ class Analyzer
     end
   end
 
+  def analyze_let(branch)
+    to_let = dispatch branch[2]
+    Proc.new do
+      to_let.call
+      to_set = LispMachine.instance_variable_get '@last_evaluated'
+      LispMachine::SYMBOL_TABLE[-1][branch[1].to_sym] = to_set
+    end
+  end
+
   def analyze_void(branch)
     Proc.new { nil }
   end
