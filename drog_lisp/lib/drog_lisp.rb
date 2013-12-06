@@ -193,7 +193,11 @@ module LispMachine
     def self.pass_execution_to_function(branch)
       # trampoline the function call to support tail call optimization
       while true
-        LispMachine.interpret(branch[:contents])
+        if branch[:contents].respond_to? :call
+          branch[:contents].call
+        else
+          LispMachine.interpret(branch[:contents])
+        end
         if LanguageHelpers.tail_call
           LanguageHelpers.replace_args_for_function branch
         else
