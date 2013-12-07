@@ -196,7 +196,7 @@ class Parser < Whittle::Parser
     r["(", :name, ")"].as { |_,n| [Tokens::GET, n] }
     r[:const].as { |c| [Tokens::CONST, c] } 
     r["(", :const, ")"].as { |_,c| [Tokens::CONST, c] }
-    r[:null].as { |_| nil }
+    r[:null].as { |_| ["void"] }
 
     r[:quoted].as { |q| q }
     

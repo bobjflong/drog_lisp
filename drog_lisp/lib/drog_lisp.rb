@@ -1,14 +1,398 @@
 
 require 'drog_lisp/grammar'
-require 'drog_lisp/identifiers'
 require 'ostruct'
 require 'continuation'
 require 'pry'
 
 module LispMachine
+  
+  class Analyzer
+
+    def initialize
+      @replace_ops_dictionary = {
+        '<' => 'lt',
+        '>' => 'gt',
+        '=' => 'eq',
+        '+' => 'add',
+        '-' => 'sub',
+        '*' => 'mul',
+        '/' => 'div'
+      }
+    end
+
+    def replace_ops op
+      if op.kind_of? Array
+        "compound"
+      elsif @replace_ops_dictionary.has_key? op
+        @replace_ops_dictionary[op]
+      else
+        op
+      end
+    end
+    
+    def dispatch branch
+      return Proc.new { nil } unless branch
+      directive = replace_ops branch[0]
+      self.send("analyze_#{directive}".to_sym, branch)
+    end
+
+    def set_last_evaluated ans
+      LispMachine.instance_variable_set '@last_evaluated', ans
+    end
+
+    def analyze_loopuntil(branch)
+      pred_eval = dispatch branch[1]
+      body = dispatch branch[2]
+
+      Proc.new do
+        while true
+          pred_eval.call
+          if not LispMachine.instance_variable_get('@last_evaluated')
+            body.call
+          else
+            break
+          end
+        end
+      end
+    end
+
+    def analyze_cons(branch)
+      left_eval = dispatch branch[1]
+      right_eval = dispatch branch[2]
+      Proc.new do
+        left_eval.call
+        left = LispMachine.instance_variable_get '@last_evaluated'
+
+        right_eval.call
+
+        right = LispMachine.instance_variable_get '@last_evaluated'
+
+        binding.pry if left == 10 and right == 10
+
+        if not right
+          set_last_evaluated left
+        else
+          set_last_evaluated [left, right].flatten(1)
+        end
+      end
+    end
+
+    def analyze_show(branch)
+      show_eval = dispatch branch[1]
+      
+      Proc.new do
+        show_eval.call
+        last_evaluated = LispMachine.instance_variable_get '@last_evaluated'
+
+        if last_evaluated.kind_of? Array and last_evaluated.length > 1
+          if last_evaluated[0] == 'const'
+            print last_evaluated[1]
+          end
+        else
+          print last_evaluated
+        end
+        print "\n"
+      end
+    end
+
+    def analyze_reccall(branch)
+      Proc.new do
+        LispMachine.instance_variable_set('@tail_call', branch)
+      end
+    end
+
+    def analyze_send(branch)
+      send_eval = dispatch branch[1]
+      receiver_eval = dispatch branch[2]
+
+      Proc.new do
+        message = send_eval.call
+        receiver = receiver_eval.call
+
+        set_last_evaluated receiver.send message
+      end
+    end
+    
+    def analyze_evaluate(branch)
+      eval_eval = dispatch branch[1]
+      
+      Proc.new do
+        to_eval = eval_eval.call
+        sexp = [:Do, LispMachine.instance_variable_get('@last_evaluated')].to_sxp
+        LispMachine.run sexp
+      end
+    end
+
+    def analyze_callcc(branch)
+      func_to_call = branch[1]
+      Proc.new do
+        callcc do |cont|
+          args = [cont]
+
+          # Give passed function the continuation as only parameter
+          params = { func_name: func_to_call, args: args }
+
+          LispMachine::LanguageHelpers.map_params_for_function params, true
+        end
+      end
+    end
+
+    def analyze_car(branch)
+      list_eval = dispatch branch[1]
+      Proc.new do
+        list_eval.call
+        set_last_evaluated LispMachine.instance_variable_get('@last_evaluated')[0]
+      end
+    end
+
+    def analyze_cdr(branch)
+      list_eval = dispatch branch[1]
+      Proc.new do
+        list_eval.call
+        result = LispMachine.instance_variable_get('@last_evaluated').drop 1
+        if result.empty?
+          set_last_evaluated nil
+        else
+          set_last_evaluated result
+        end
+      end
+    end
+
+    def analyze_quote(branch)
+      Proc.new do
+        set_last_evaluated branch[1].to_sym
+      end
+    end
+
+    def analyze_compound(branch)
+      
+      analyzed = branch.map { |b| dispatch(b) }
+
+      Proc.new do
+        analyzed.each do |a|
+          a.call if a.respond_to? :call
+        end
+      end
+    end
+
+    def analyze_set(branch)
+      struct_eval = dispatch(branch[2])
+      val_eval    = dispatch(branch[3])
+      value_to_set = branch[1].match(/[^\-]+$/)[0]
+      Proc.new do
+        struct_eval.call
+        struct = LispMachine.instance_variable_get '@last_evaluated'
+
+        val_eval.call
+        val = LispMachine.instance_variable_get '@last_evaluated'
+        
+        LispMachine::LanguageHelpers.check_for_struct struct, value_to_set
+
+        struct.send "#{value_to_set}=", val
+      end
+    end
+
+    def analyze_gets(branch)
+      struct_eval = dispatch branch[2]
+      value_to_get = branch[1].match(/[^\-]+$/)[0]
+      Proc.new do
+        struct_eval.call
+        struct = LispMachine.instance_variable_get '@last_evaluated'
+        
+        LispMachine::LanguageHelpers.check_for_struct struct, value_to_get
+        set_last_evaluated(struct.send value_to_get)
+      end      
+    end
+
+    def analyze_def(branch)
+      name = branch[1]
+      params = branch[2]
+      
+      result = {
+        type: 'definition',
+        contents: dispatch(branch[-1]),
+        arguments: LispMachine::LanguageHelpers::extract_args_from_definition(branch),
+        name: name 
+      }
+            
+      LispMachine::SYMBOL_TABLE[-1][name.to_sym] = result
+      LanguageHelpers::close_over_variables branch, result
+
+
+      Proc.new do
+        to_return = result.clone 
+        LanguageHelpers::close_over_variables branch, to_return
+        set_last_evaluated to_return
+      end
+    end
+
+    def analyze_lt(branch)
+      operand_1_eval = dispatch branch[1]
+      operand_2_eval = dispatch branch[2]
+      Proc.new do
+        operand_1_eval.call
+        operand_1 = LispMachine.instance_variable_get('@last_evaluated')
+        operand_2_eval.call
+        operand_2 = LispMachine.instance_variable_get('@last_evaluated')
+
+        set_last_evaluated (operand_1 < operand_2)
+      end
+    end
+
+    def analyze_gt(branch)
+      operand_1_eval = dispatch branch[1]
+      operand_2_eval = dispatch branch[2]
+      Proc.new do
+        operand_1_eval.call
+        operand_1 = LispMachine.instance_variable_get('@last_evaluated')
+        operand_2_eval.call
+        operand_2 = LispMachine.instance_variable_get('@last_evaluated')
+
+        set_last_evaluated (operand_1 > operand_2)
+      end
+    end
+
+    def analyze_add(branch)
+      operand_1_eval = dispatch branch[1]
+      operand_2_eval = dispatch branch[2]
+
+      Proc.new do
+        operand_1_eval.call
+        operand_1 = LispMachine.instance_variable_get('@last_evaluated')
+        operand_2_eval.call
+        operand_2 = LispMachine.instance_variable_get('@last_evaluated')
+
+        set_last_evaluated (operand_1 + operand_2)
+      end
+    end
+
+    def analyze_sub(branch)
+      operand_1_eval = dispatch branch[1]
+      operand_2_eval = dispatch branch[2]
+
+      Proc.new do
+        operand_1_eval.call
+        operand_1 = LispMachine.instance_variable_get('@last_evaluated')
+        operand_2_eval.call
+        operand_2 = LispMachine.instance_variable_get('@last_evaluated')
+
+        set_last_evaluated (operand_1 - operand_2)
+      end
+    end
+
+    def analyze_mul(branch)
+      operand_1_eval = dispatch branch[1]
+      operand_2_eval = dispatch branch[2]
+
+      Proc.new do
+        operand_1_eval.call
+        operand_1 = LispMachine.instance_variable_get('@last_evaluated')
+        operand_2_eval.call
+        operand_2 = LispMachine.instance_variable_get('@last_evaluated')
+
+        set_last_evaluated (operand_1 * operand_2)
+      end
+    end
+    
+    def analyze_div(branch)
+      operand_1_eval = dispatch branch[1]
+      operand_2_eval = dispatch branch[2]
+
+      Proc.new do
+        operand_1_eval.call
+        operand_1 = LispMachine.instance_variable_get('@last_evaluated')
+        operand_2_eval.call
+        operand_2 = LispMachine.instance_variable_get('@last_evaluated')
+
+        set_last_evaluated (operand_1 / operand_2)
+      end
+    end
+    
+    def analyze_eq(branch)
+      operand_1_eval = dispatch branch[1]
+      operand_2_eval = dispatch branch[2]
+
+      Proc.new do
+        operand_1_eval.call
+        operand_1 = LispMachine.instance_variable_get('@last_evaluated')
+        operand_2_eval.call
+        operand_2 = LispMachine.instance_variable_get('@last_evaluated')
+
+        set_last_evaluated (operand_1 == operand_2)
+      end
+    end
+    
+    def analyze_struct(branch)
+      Proc.new do
+        set_last_evaluated(LispMachine::LanguageHelpers.create_struct_from branch)
+      end
+    end
+
+    def analyze_let(branch)
+      to_let = dispatch branch[2]
+      Proc.new do
+        to_let.call
+        to_set = LispMachine.instance_variable_get '@last_evaluated'
+        LispMachine::SYMBOL_TABLE[-1][branch[1].to_sym] = to_set
+      end
+    end
+
+    def analyze_void(branch)
+      Proc.new { set_last_evaluated nil }
+    end
+
+    def analyze_get(branch)
+      Proc.new do
+        set_last_evaluated(LispMachine.lookup(LispMachine::SYMBOL_TABLE.length-1, branch[1]))
+      end
+    end
+
+    def analyze_const(branch)
+      Proc.new { set_last_evaluated branch[1] }
+    end
+
+    def analyze_if branch
+      left = dispatch branch[2]
+      right  = dispatch branch[3]
+      cond  = dispatch branch[1]
+      Proc.new do
+        if cond.call
+          left.call
+        else
+          right.call
+        end
+      end
+    end
+
+    def analyze_call branch
+      #map the arguments to lambdas that will give us the argument
+      analyzed_args = branch[2..-1].map do |a|
+        dispatch a
+      end
+      Proc.new do
+
+        arguments_to_pass = analyzed_args.map do |a|
+          a.call
+          LispMachine.instance_variable_get '@last_evaluated'
+        end
+        
+        branch[2..-1] = arguments_to_pass
+
+        arguments_for_function_call = {
+          func_name: branch[1],
+          args: arguments_to_pass 
+        }
+
+        LispMachine::LanguageHelpers.map_params_for_function arguments_for_function_call
+      end
+    end
+  end
+
   SYMBOL_TABLE = [{ }]
   
   @last_evaluated
+
+  @analyzer = Analyzer.new
   
   # Information about tail call optimization
   @tail_call
@@ -77,14 +461,14 @@ module LispMachine
       result
     end
     
-    def self.close_over_variables(branch)
+    def self.close_over_variables(branch, target)
       closed_over = branch[POSITION_OF_CLOSED_OVER_VARIABLES]
       saved_as = {}
       if (closed_over)
         [closed_over].flatten.each do |var|
           saved_as[var.to_sym] = LispMachine.lookup LispMachine::SYMBOL_TABLE.length-1, var
         end
-        LispMachine::SYMBOL_TABLE[-1][branch[1].to_sym][:closed_over] = saved_as
+        target[:closed_over] = saved_as
       end
     end
     
@@ -143,10 +527,10 @@ module LispMachine
     # Set up a symbol table for a function call
     def self.map_params_for_function(args, cc = false)
 
+
       #puts "self.map_params_for_function #{args} #{cc}"
       func_find = LispMachine::lookup(LispMachine::SYMBOL_TABLE.length - 1, args[:func_name])
 
-      #puts "func_find #{func_find}"
       if func_find.kind_of? Continuation and cc
         LispMachine.instance_variable_set('@last_evaluated', args[:args][0])
       end
@@ -155,7 +539,7 @@ module LispMachine
         func_find.call
         return
       end
-        
+       
       if not func_find or func_find[:type] != 'definition'
         throw :no_such_function
       else
@@ -204,9 +588,10 @@ module LispMachine
           break
         end
       end
+      
       # Gather new closed values
       reclosed = LanguageHelpers.save_closed_variables_from_scope branch[:closed_over]
-
+      
       LispMachine::pop_scope()
 
       return reclosed
@@ -244,160 +629,11 @@ module LispMachine
     end
     
     return unless branch
-    
-    # ["def", "f", ["+", 1, 2]], ["+", 1, 2]
-    if Identifier.is_a_definition(branch) then
-      
-      LispMachine::SYMBOL_TABLE[-1][branch[1].to_sym] = {
-        type: 'definition',
-        contents: branch[-1],
-        arguments: LanguageHelpers::extract_args_from_definition(branch),
-        name: branch[1].to_sym
-      }
-      
-      LanguageHelpers::close_over_variables(branch)
-      
-      @last_evaluated = LispMachine::SYMBOL_TABLE[-1][branch[1].to_sym]
-      
-    elsif Identifier.is_evaluate(branch) then
-      LispMachine.interpret [branch[1]]
-      sexp = [:Do, @last_evaluated].to_sxp
-      LispMachine.run sexp
 
-    elsif Identifier.is_let(branch) then
-      LispMachine.interpret([branch[2]])
-      LispMachine::SYMBOL_TABLE[-1][branch[1].to_sym] = @last_evaluated
-    
-    elsif Identifier.is_send(branch) then
-      LanguageHelpers.process_message branch
-  
-    elsif Identifier.is_set(branch) then
-      LispMachine.interpret [branch[2]]
-      struct = @last_evaluated
+    analyzed = @analyzer.dispatch branch
 
-      LispMachine.interpret [branch[3]]
-      value = @last_evaluated
-
-      value_to_set = branch[1].match(/[^\-]+$/)[0]
-      LanguageHelpers.check_for_struct struct, value_to_set
-
-      struct.send "#{value_to_set}=", value
-
-    elsif Identifier.is_gets(branch) then
-      LispMachine.interpret [branch[2]]
-      struct = @last_evaluated
-      to_get = branch[1].match(/[^\-]+$/)[0]
-      LanguageHelpers.check_for_struct struct, to_get
-
-      @last_evaluated = struct.send to_get
-  
-    elsif Identifier.is_quote(branch) then
-      @last_evaluated = branch[1].to_sym
-    
-    elsif Identifier.is_const(branch) then
-      @last_evaluated = branch[1]
-      return @last_evaluated
-    
-    elsif Identifier.is_struct(branch) then
-      @last_evaluated = LanguageHelpers.create_struct_from branch
-
-    elsif Identifier.is_callcc(branch) then
-      func_to_call = branch[1]
-      callcc do |cont|
-        args = [cont]
-
-        # Give passed function the continuation as only parameter
-        params = { func_name: func_to_call, args: args }
-
-        LanguageHelpers.map_params_for_function params, true
-
-      end
-    
-    elsif Identifier.is_a_getter(branch) then
-      @last_evaluated = lookup(LispMachine::SYMBOL_TABLE.length-1, branch[1])
-    
-    elsif Identifier.is_loopuntil(branch) then
-      cond = branch[1]
-      LispMachine::interpret [cond]
-      while not @last_evaluated
-        LispMachine::interpret branch[2]
-        LispMachine::interpret [cond]
-      end
-
-    elsif Identifier.is_a_show(branch) then
-      LispMachine.interpret([branch[1]])
-      if @last_evaluated.kind_of? Array and @last_evaluated.length > 1
-        if @last_evaluated[0] == 'const'
-          print @last_evaluated[1]
-        end
-      else
-        print @last_evaluated
-      end
-      print "\n"
-    
-    elsif Identifier.is_gt(branch) then
-      args = LanguageHelpers.extract_simple_args(branch)
-      @last_evaluated = args[0] < args[1]
-    
-    elsif Identifier.is_car(branch) then
-      LispMachine.interpret([branch[1]])
-      @last_evaluated = @last_evaluated[0]
-    
-    elsif Identifier.is_cdr(branch) then
-      LispMachine.interpret([branch[1]])
-      result = @last_evaluated[1..-1]
-      if result.empty?
-        @last_evaluated = nil
-      else
-        @last_evaluated = result
-      end
-    
-    elsif Identifier.is_cons(branch) then
-      LispMachine::interpret([branch[1]])
-      left = @last_evaluated
-      
-      LispMachine::interpret([branch[2]])
-      right = @last_evaluated
-      
-      if not right
-        @last_evaluated = left
-      else
-        @last_evaluated = [left, right].flatten 1
-      end
-    
-    elsif Identifier.is_cond(branch) then
-      LispMachine::interpret([branch[1]])
-      if @last_evaluated then
-        LispMachine::interpret([branch[2]])
-      else
-        LispMachine::interpret([branch[3]])
-      end
-    
-    elsif Identifier.is_mul(branch) then
-      args = LanguageHelpers.extract_simple_args(branch)
-      @last_evaluated = args[0].to_i * args[1].to_i
-    
-    elsif Identifier.is_an_adder(branch) then
-      args = LanguageHelpers.extract_simple_args(branch)
-      @last_evaluated = args[0].to_i + args[1].to_i
-    
-    elsif Identifier.is_sub(branch) then
-      args = LanguageHelpers.extract_simple_args(branch)
-      @last_evaluated = args[0].to_i - args[1].to_i
-
-    elsif Identifier.is_eq(branch) then
-      args = LanguageHelpers.extract_simple_args(branch)
-      @last_evaluated = args[0] == args[1]
-
-    elsif Identifier.is_reccall(branch)
-      LispMachine.instance_variable_set '@tail_call', branch
-
-    elsif Identifier.is_call(branch)
-      args = LanguageHelpers.extract_complex_args_func_call(branch)
-      LanguageHelpers.map_params_for_function(args)
-    end
+    analyzed.call if analyzed.respond_to? :call
    
     LispMachine.interpret(tree[1])
-  #  return tree[1]
   end
 end
