@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name              = "drog_lisp"
-  s.version           = "0.0.1"
+  s.version           = "0.0.2"
   s.platform          = Gem::Platform::RUBY
   s.authors           = ["Bob Long"]
   s.email             = ["robertjflong@gmail.com"]
