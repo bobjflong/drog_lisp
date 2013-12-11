@@ -31,15 +31,23 @@ module Tokens
 end
 
 module GrammarHelpers
+
+  def self.add_arguments result, a
+    a.each do |to_add|
+      if to_add[0].kind_of? Array
+        add_arguments result, to_add
+      else
+        result << to_add
+      end
+    end
+  end
   
   def self.gather_arguments result, a
     if a.length > 0 and not a[0].kind_of? Array
       #single element arg list
       a = [a]
     end
-    a.each do |p|
-      result << p
-    end
+    add_arguments result, a
     result
   end
 

@@ -5,6 +5,6 @@ end
 task :rebuild do |_|
   `gem uninstall drog_lisp`
   `gem build drog_lisp.gemspec`
-  `gem install drog_lisp-0.0.2.gem`
+  `gem install --local drog_lisp-0.0.2.gem`
   system "for file in test/*.rb; do ruby $file; done"
 end

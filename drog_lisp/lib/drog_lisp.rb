@@ -67,8 +67,6 @@ module LispMachine
 
         right = LispMachine.instance_variable_get '@last_evaluated'
 
-        binding.pry if left == 10 and right == 10
-
         if not right
           set_last_evaluated left
         else
@@ -369,6 +367,7 @@ module LispMachine
       analyzed_args = branch[2..-1].map do |a|
         dispatch a
       end
+
       Proc.new do
 
         arguments_to_pass = analyzed_args.map do |a|
