@@ -32,6 +32,9 @@ module LispMachine
     
     def dispatch branch
       return Proc.new { nil } unless branch
+      if not branch.kind_of? Array
+        branch = ["const", branch]
+      end
       directive = replace_ops branch[0]
       self.send("analyze_#{directive}".to_sym, branch)
     end
