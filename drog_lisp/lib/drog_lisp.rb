@@ -378,8 +378,6 @@ module LispMachine
           LispMachine.instance_variable_get '@last_evaluated'
         end
         
-        branch[2..-1] = arguments_to_pass
-
         arguments_for_function_call = {
           func_name: branch[1],
           args: arguments_to_pass 
@@ -584,7 +582,7 @@ module LispMachine
         else
           LispMachine.interpret(branch[:contents])
         end
-        if LanguageHelpers.tail_call
+        if LanguageHelpers.tail_call and LanguageHelpers.tail_call[1].to_s == branch[:name].to_s
           LanguageHelpers.replace_args_for_function branch
         else
           break
