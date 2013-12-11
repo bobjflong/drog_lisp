@@ -15,6 +15,7 @@ module Tokens
   LOOPUNTIL = "loopuntil"
   IF = "if"
   MUL = "*"
+  DIV = "/"
   SUB = "-"
   CONS = "cons"
   EQ = "="
@@ -56,6 +57,7 @@ class Parser < Whittle::Parser
   rule("}")
   rule("<")
   rule("~")
+  rule("/")
   
   rule(:eq => /\=/).as { |eq| eq }
   rule(:car => /Car/).as { |car| car }
@@ -63,6 +65,7 @@ class Parser < Whittle::Parser
   rule(:callcc => /CallCC/).as { |callcc| callcc }
   rule(:sub => /\-/).as { |sub| sub }
   rule(:mul => /\*/).as { |mul| mul }
+  rule(:div => /\//).as { |div| div }  
   rule(:add => /\+/).as { |add| add }
   rule(:define => /Func/).as { |d| d }
   rule(:cons => /Cons/).as { |c| c }
@@ -182,6 +185,8 @@ class Parser < Whittle::Parser
     
     r["(", :add, :inner_expr, :inner_expr, ")"].as { |_,_,a,b,_| [ Tokens::ADD, a, b ] }
     
+    r["(", "/", :inner_expr, :inner_expr, ")"].as { |_,_,a,b,_| [ Tokens::DIV, a, b ] }
+    
     r["(", :sub, :inner_expr, :inner_expr, ")"].as { |_,_,a,b,_| [ Tokens::SUB, a, b ] }
 
     r["(", :car, :inner_expr, ")"].as { |_,_,a| [ Tokens::CAR, a ] }
@@ -191,7 +196,7 @@ class Parser < Whittle::Parser
     r["(", :mul, :inner_expr, :inner_expr, ")"].as do |_,_,a,b,_|
       [ Tokens::MUL, a, b ]
     end
-    
+
     r[:name].as { |n| [Tokens::GET, n] }
     r["(", :name, ")"].as { |_,n| [Tokens::GET, n] }
     r[:const].as { |c| [Tokens::CONST, c] } 

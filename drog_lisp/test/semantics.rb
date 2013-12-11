@@ -102,6 +102,12 @@ describe "basic arithmetic" do
       )
     """), 13
   end
+
+  it "can div numbers" do
+    assert_equal (LispMachine.run """
+      (Do (/ 15 5))
+    """), 3
+  end
 end
 
 describe "test recursion" do
