@@ -28,6 +28,7 @@ module Tokens
   QUOTE = "quote"
   EVALUATE = "evaluate"
   RECCALL = "reccall"
+  MOD="%"
 end
 
 module GrammarHelpers
@@ -73,6 +74,7 @@ class Parser < Whittle::Parser
   rule(:callcc => /CallCC/).as { |callcc| callcc }
   rule(:sub => /\-/).as { |sub| sub }
   rule(:mul => /\*/).as { |mul| mul }
+  rule(:mod => /\%/).as { |mod| mod }
   rule(:div => /\//).as { |div| div }  
   rule(:add => /\+/).as { |add| add }
   rule(:define => /Func/).as { |d| d }
@@ -92,7 +94,7 @@ class Parser < Whittle::Parser
   rule(:let => /Let/).as { |l| l }
   rule(:if => /If/).as { |i| i }
   rule(:show => /Show/).as { |s| s }
-  rule(:name => /[a-zA-Z\-]+/).as { |n| n }
+  rule(:name => /[a-zA-Z\-\?]+/).as { |n| n }
   rule(:reserved => /[\+\-\\\*]/).as { |n| n }
   rule(:const => /([0-9]+)|(\'[a-zA-Z\-]*\')/).as do |n| 
     if not n[0] == "'" then
@@ -192,6 +194,8 @@ class Parser < Whittle::Parser
     r["(", :eq, :inner_expr, :inner_expr, ")"].as { |_,_,a,b,_| [Tokens::EQ, a, b] }
     
     r["(", :add, :inner_expr, :inner_expr, ")"].as { |_,_,a,b,_| [ Tokens::ADD, a, b ] }
+
+    r["(", :mod, :inner_expr, :inner_expr, ")"].as { |_,_,a,b,_| [ Tokens::MOD, a, b ] }
     
     r["(", "/", :inner_expr, :inner_expr, ")"].as { |_,_,a,b,_| [ Tokens::DIV, a, b ] }
     

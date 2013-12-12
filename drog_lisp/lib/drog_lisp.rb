@@ -16,7 +16,8 @@ module LispMachine
         '+' => 'add',
         '-' => 'sub',
         '*' => 'mul',
-        '/' => 'div'
+        '/' => 'div',
+        '%' => 'mod'
       }
     end
 
@@ -305,7 +306,21 @@ module LispMachine
         operand_2_eval.call
         operand_2 = LispMachine.instance_variable_get('@last_evaluated')
 
-        set_last_evaluated (operand_1 / operand_2)
+        set_last_evaluated (operand_1.to_f / operand_2)
+      end
+    end
+
+    def analyze_mod(branch)
+      operand_1_eval = dispatch branch[1]
+      operand_2_eval = dispatch branch[2]
+
+      Proc.new do
+        operand_1_eval.call
+        operand_1 = LispMachine.instance_variable_get('@last_evaluated')
+        operand_2_eval.call
+        operand_2 = LispMachine.instance_variable_get('@last_evaluated')
+
+        set_last_evaluated (operand_1.to_f % operand_2)
       end
     end
     
@@ -357,7 +372,8 @@ module LispMachine
       right  = dispatch branch[3]
       cond  = dispatch branch[1]
       Proc.new do
-        if cond.call
+        cond.call
+        if LispMachine.instance_variable_get('@last_evaluated')
           left.call
         else
           right.call
