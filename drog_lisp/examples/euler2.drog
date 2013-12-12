@@ -1,7 +1,7 @@
 (
 Do
 
-  (Func cycler n x)
+  (Func limit n x)
     (Do
       (If (< x n)
         x
@@ -15,7 +15,7 @@ Do
       (Let small-enough (< next max))
 
       
-      (Let cycled (Call cycler 3 count))
+      (Let cycled (Call limit 3 count))
 
       (If (small-enough)
         (RecCall sum-even-fib-to max r next ( + 1 cycled ) 
