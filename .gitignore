@@ -3,3 +3,4 @@
 
 *.gem
 *.swo
+drog_lisp/examples/is_prime.drog
