@@ -96,7 +96,7 @@ class Parser < Whittle::Parser
   rule(:show => /Show/).as { |s| s }
   rule(:name => /[a-zA-Z\-\?]+/).as { |n| n }
   rule(:reserved => /[\+\-\\\*]/).as { |n| n }
-  rule(:const => /([0-9]+)|(\'[a-zA-Z\-]*\')/).as do |n| 
+  rule(:const => /([0-9]+)|(\'.*\')/).as do |n| 
     if not n[0] == "'" then
       n.to_i
     else
