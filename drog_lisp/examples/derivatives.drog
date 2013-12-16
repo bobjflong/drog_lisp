@@ -27,16 +27,15 @@ Do
       )
     )
   
-  (Func example-func x)
+  (Func find-square-root w)
     (Do
-      (Let ans (* x x))
-      (Let ans (* 5 ans))
-      (Let ans (- ans x))
-      (Let ans (- ans 10))
+      (Func f-sqrt x ~(w))
+        (Do
+          (- (* x x) w)
+        )
+      (Call newton-raphson f-sqrt (/ w 2))
     )
 
-  (Show (Call newton-raphson example-func 1))
-
-
+  (Show (Call find-square-root 12312))
 
 )
