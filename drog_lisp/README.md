@@ -1,6 +1,6 @@
 ##drog_lisp
 
-Embedded functional language for Ruby --- resembles scheme/lisp but with unique semantics.
+Embedded functional language for Ruby --- resembles scheme/lisp but with unique semantics. Code example (estimating square root using Newton's method and numerical differentiation): https://gist.github.com/bobjflong/7984315
 
 #####Examples:
 ######Recursive factorial:
