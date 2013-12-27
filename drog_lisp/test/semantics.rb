@@ -374,6 +374,35 @@ describe "preloading objects" do
   end
 end
 
+describe "logic operations" do
+  it "allows logical operations to be performed" do
+    
+    assert_equal (LispMachine.run """
+    (Do
+
+      (Func and x y)
+        (Do
+          (If x y x)
+        )
+
+      (Call and (< 1 2) (< 2 3))
+
+    )
+    """), true
+
+    assert_equal (LispMachine.run """
+    (Do
+      (Func or x y)
+        (Do
+          (If x x y)
+        )
+
+      (Call or (< 1 2) (< 3 2))
+    )
+    """), true
+  end
+end
+
 
 
 
