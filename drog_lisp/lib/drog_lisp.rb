@@ -180,7 +180,7 @@ module LispMachine
     def analyze_set(branch)
       struct_eval = dispatch(branch[2])
       val_eval    = dispatch(branch[3])
-      value_to_set = branch[1].match(/[^\-]+$/)[0]
+      value_to_set = match_struct_name(branch[1])
       Proc.new do
         struct_eval.call
         struct = LispMachine.instance_variable_get '@last_evaluated'
@@ -196,7 +196,7 @@ module LispMachine
 
     def analyze_gets(branch)
       struct_eval = dispatch branch[2]
-      value_to_get = branch[1].match(/[^\-]+$/)[0]
+      value_to_get = match_struct_name(branch[1])
       Proc.new do
         struct_eval.call
         struct = LispMachine.instance_variable_get '@last_evaluated'
@@ -401,6 +401,12 @@ module LispMachine
 
         LispMachine::LanguageHelpers.map_params_for_function arguments_for_function_call
       end
+    end
+
+    private
+
+    def match_struct_name n
+      n.match(/[^\-]+$/)[0]
     end
   end
 
