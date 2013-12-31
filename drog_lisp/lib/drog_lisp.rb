@@ -167,9 +167,7 @@ module LispMachine
     end
 
     def analyze_compound(branch)
-      
       analyzed = branch.map { |b| dispatch(b) }
-
       Proc.new do
         analyzed.each do |a|
           a.call if a.respond_to? :call
