@@ -2,6 +2,22 @@
 require 'thread'
 require 'sxp'
 
+class Array
+  def to_cons
+    res = ""
+    self.each_with_index do |v, i|
+      if v.kind_of? Array
+        res += "(Cons #{v.to_cons}"
+      else
+        res += "(Cons #{v.to_sxp}"
+      end
+    end
+    res += " null "
+    res += (")" * self.length)
+    res
+  end
+end
+
 class LispMacro
  
   attr_reader :name

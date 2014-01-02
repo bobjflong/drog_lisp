@@ -252,7 +252,7 @@ Build up your own expressions as data, then execute them:
 LispMachine.run """
     
 (Do
-  (Let operator '+)
+  (Let operator :+)
   (Let my-calc (Cons operator (Cons 1 2)))
   (Evaluate my-calc)
 )
@@ -291,7 +291,7 @@ Use Send to send messages to underlying Ruby objects.
 len = LispMachine.run """
 (Do
   (Let list (Cons 1 (Cons 2 (Cons 3 (Cons 4 5)))))
-  (Let answer (Send 'length list))
+  (Let answer (Send :length list))
 )
 """
 

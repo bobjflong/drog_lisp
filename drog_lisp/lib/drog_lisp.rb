@@ -70,8 +70,13 @@ module LispMachine
         right_eval.call
 
         right = LispMachine.instance_variable_get '@last_evaluated'
-
-        if not right
+        if left.kind_of? Array
+          if right
+            set_last_evaluated [left] + [right]
+          else
+            set_last_evaluated [left]
+          end
+        elsif not right
           set_last_evaluated left
         else
           set_last_evaluated [left, right].flatten(1)
@@ -89,6 +94,8 @@ module LispMachine
         if last_evaluated.kind_of? Array and last_evaluated.length > 1
           if last_evaluated[0] == 'const'
             print last_evaluated[1]
+          else
+            print last_evaluated
           end
         else
           print last_evaluated

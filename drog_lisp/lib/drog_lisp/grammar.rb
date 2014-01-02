@@ -89,7 +89,7 @@ class Parser < Whittle::Parser
   rule(:reccall => /RecCall/).as { |c| c }
   rule(:call => /Call/).as { |c| c }
   rule(:struct => /Struct/).as { |s| s }
-  rule(:quote => /\'/).as { |q| q }
+  rule(:quote => /\:/).as { |q| q }
   rule(:send => /Send/).as { |s| s }
   rule(:let => /Let/).as { |l| l }
   rule(:if => /If/).as { |i| i }

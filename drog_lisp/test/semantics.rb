@@ -305,7 +305,7 @@ describe "symbols" do
     assert_equal (LispMachine.run """
     
     (Do
-      'x
+      :x
     )
   
     """), :x
@@ -315,7 +315,7 @@ describe "symbols" do
     assert_equal (LispMachine.run """
       
     (Do
-      (Let operator '+)
+      (Let operator :+)
       (Cons operator (Cons 1 2))
 
     )
@@ -327,7 +327,7 @@ describe "symbols" do
     assert_equal (LispMachine.run """
     
     (Do
-      (Let operator '+)
+      (Let operator :+)
       (Let my-calc (Cons operator (Cons 1 2)))
       (Evaluate my-calc)
     )
@@ -342,7 +342,7 @@ describe "message sending" do
     assert_equal (LispMachine.run """
     (Do
       (Let list (Cons 1 (Cons 2 (Cons 3 (Cons 4 5)))))
-      (Let answer (Send 'length list))
+      (Let answer (Send :length list))
     )
   
     """), 5
@@ -366,7 +366,7 @@ describe "preloading objects" do
       
       LispMachine.run """
       (Do
-        (Send 'bark mydog)
+        (Send :bark mydog)
       )
       """
     end
