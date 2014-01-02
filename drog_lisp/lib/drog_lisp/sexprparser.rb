@@ -19,9 +19,9 @@ class LispMacro
 end
 
 class StringSplit < Struct.new(:string, :position)
-    def replace_with str
-      string[position.start..position.end] = str
-    end
+  def replace_with str
+    string[position.start..position.end] = str
+  end
 end
 
 class MacroList
