@@ -5,7 +5,7 @@ require 'sxp'
 class Array
   def to_cons
     res = ""
-    self.each_with_index do |v, i|
+    self.each do |v|
       if v.kind_of? Array
         res += "(Cons #{v.to_cons}"
       else
@@ -14,7 +14,6 @@ class Array
     end
     res += " null "
     res += (")" * self.length)
-    res
   end
 end
 

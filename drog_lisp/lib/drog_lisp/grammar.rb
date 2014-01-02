@@ -89,7 +89,7 @@ class Parser < Whittle::Parser
   rule(:reccall => /RecCall/).as { |c| c }
   rule(:call => /Call/).as { |c| c }
   rule(:struct => /Struct/).as { |s| s }
-  rule(:quote => /\:/).as { |q| q }
+  rule(:quote => /\:[A-Za-z\+\-\\\*\~]+/).as { |q| q }
   rule(:send => /Send/).as { |s| s }
   rule(:let => /Let/).as { |l| l }
   rule(:if => /If/).as { |i| i }
@@ -106,10 +106,14 @@ class Parser < Whittle::Parser
   
   rule(:expr) do |r|
     r["(", :do, :expression_list, ")"].as { |_,_,a,_| a }
+    r["(", :expr, ")"].as { |_,e,_| e }
   end
   
   rule(:expression_list) do |r|
     r[:inner_expr, :expression_list].as do |a,b|
+      [a] + [b]
+    end
+    r["(", :inner_expr, :expression_list, ")"].as do |_,a,b,_|
       [a] + [b]
     end
     r[]
@@ -220,11 +224,7 @@ class Parser < Whittle::Parser
   end
 
   rule(:quoted) do |r|
-    #allow some operators
-    r[:quote, :add].as { |_,x| [Tokens::QUOTE, SXP.read(x)] } 
-    r[:quote, :sub].as { |_,x| [Tokens::QUOTE, SXP.read(x)] }
-    r[:quote, :mul].as { |_,x| [Tokens::QUOTE, SXP.read(x)] } 
-    r[:quote, :name].as {|_,x| [Tokens::QUOTE, SXP.read(x)] }
+    r[:quote].as { |q| [Tokens::QUOTE, SXP.read(q[1..-1])] }
   end
   
   rule(:param_list) do |r|

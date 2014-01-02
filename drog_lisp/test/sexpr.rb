@@ -142,12 +142,24 @@ describe "S-Expression extraction" do
   it "Allows list literals to be built" do
     prog = %Q(
     (Do
-      (Show (Evaluate (list (:+ 2 (:+ 7 3)))))
+      (Show 
+        (Evaluate
+          (list 
+            (:Do 
+              (:Func :f :x :y )
+                (:Do
+                  (:+ :x :y)
+                )
+              (:Call :f 10 2)
+            )
+          )
+        )
+      )
     )
     )
 
     list_literal = LispMacro.new 'list' do |ast|
-      elems = ast.drop(1).flatten 1
+      elems = ast.drop(1)
       elems.to_cons
     end
 

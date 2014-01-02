@@ -60,6 +60,14 @@ module LispMachine
       end
     end
 
+    def is_cmpd branch
+      (branch.length > 1 and branch[0].kind_of? Array)
+    end
+
+    def is_not_cmpd branch
+      not is_cmpd(branch)
+    end
+
     def analyze_cons(branch)
       left_eval = dispatch branch[1]
       right_eval = dispatch branch[2]
@@ -70,17 +78,42 @@ module LispMachine
         right_eval.call
 
         right = LispMachine.instance_variable_get '@last_evaluated'
-        if left.kind_of? Array
-          if right
-            set_last_evaluated [left] + [right]
-          else
-            set_last_evaluated [left]
-          end
-        elsif not right
+        
+        if not right
           set_last_evaluated left
         else
-          set_last_evaluated [left, right].flatten(1)
+
+  
+          #Special case with keyword :Do
+          #:Do
+          #[:+, :x, :y]
+          # => [:Do, [:+, :x, :y]]
+
+          if left == :Do
+
+            if is_not_cmpd right
+             set_last_evaluated [left, right] 
+            else
+              set_last_evaluated [left, right].flatten 1
+            end
+          
+          else
+            if left.kind_of? Array
+              if right
+                if is_cmpd right
+                  set_last_evaluated [left] + right
+                else
+                  set_last_evaluated [left] + [right]
+                end
+              else
+                set_last_evaluated [left]
+              end
+            else
+              set_last_evaluated [left,right].flatten 1
+            end
+          end
         end
+
       end
     end
 
@@ -127,7 +160,15 @@ module LispMachine
       
       Proc.new do
         to_eval = eval_eval.call
-        sexp = [:Do, LispMachine.instance_variable_get('@last_evaluated')].to_sxp
+
+        program = LispMachine.instance_variable_get '@last_evaluated'
+        sexp = nil
+
+        if not program[0] == :Do
+          sexp = [:Do, program].to_sxp
+        else
+          sexp = program.to_sxp
+        end
         LispMachine.run sexp
       end
     end
