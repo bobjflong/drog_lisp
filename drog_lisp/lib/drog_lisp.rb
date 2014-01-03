@@ -68,6 +68,15 @@ module LispMachine
       not is_cmpd(branch)
     end
 
+    def wrap_unless_cmpd branch
+      return [] unless branch
+      if is_cmpd(branch)
+        branch
+      else
+        [branch]
+      end
+    end
+
     def analyze_cons(branch)
       left_eval = dispatch branch[1]
       right_eval = dispatch branch[2]
@@ -85,9 +94,10 @@ module LispMachine
 
   
           #Special case with keyword :Do
-          #:Do
+          #:Do -cons with-
           #[:+, :x, :y]
           # => [:Do, [:+, :x, :y]]
+          # ie. Should not be merged into one list
 
           if left == :Do
 
@@ -99,15 +109,7 @@ module LispMachine
           
           else
             if left.kind_of? Array
-              if right
-                if is_cmpd right
-                  set_last_evaluated [left] + right
-                else
-                  set_last_evaluated [left] + [right]
-                end
-              else
-                set_last_evaluated [left]
-              end
+              set_last_evaluated [left] + wrap_unless_cmpd(right)
             else
               set_last_evaluated [left,right].flatten 1
             end
