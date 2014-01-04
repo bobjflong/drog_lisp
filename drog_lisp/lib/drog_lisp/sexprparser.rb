@@ -53,19 +53,53 @@ class MacroList
   def call ast, split
     @macros.each { |m| m.handle ast, split }
   end
+
+  def empty?
+    @macros.empty?
+  end
+
+  def apply_one_to_prog sxp_parser, prog
+    @macros.find do |m|
+      LispPreprocessor.apply_macro_to_prog sxp_parser, m, prog
+    end
+  end
 end
 
 module LispPreprocessor
   
   def self.preprocess prog, macros
-    possible_macro_extractor = SexprParser.new prog
-    possible_macro_extractor.find_sexprs
-    possible_macro_extractor.parsed.each_with_index do |v, i|
-      parsed = SXP.read v
-      matching_macros = macros.matching parsed[0]
-      split = StringSplit.new prog, possible_macro_extractor.positions[i]
-      matching_macros.call parsed, split
+    LispPreprocessor.apply_macros_to_prog macros, prog 
+  end
+
+  def self.apply_macros_to_prog macros, prog
+    sxp_parser = SexprParser.new prog
+    sxp_parser.find_sexprs
+    
+    #each round we attempt to apply a macro
+    #the sxp_parser needs to be updated if a macro is successfully applied
+    while true
+      once_applied = macros.apply_one_to_prog sxp_parser, prog
+      if once_applied
+        sxp_parser = SexprParser.new prog
+        sxp_parser.find_sexprs
+      else
+        break
+      end
     end
+  end
+
+  def self.apply_macro_to_prog sxp_parser, macro, prog
+    matching_sxps = sxp_parser.sxps_matching_macro macro
+
+   # binding.pry
+    return false if matching_sxps.empty?
+    
+    i = matching_sxps[0]
+
+    split = StringSplit.new prog, sxp_parser.positions[i]
+    macro.handle SXP.read(sxp_parser.parsed[i]), split
+    
+    return true
   end
 end
 
@@ -82,6 +116,14 @@ class SexprParser
     @parsed = []
     @positions = []
     @mutex = Mutex.new
+  end
+
+  def sxps_matching_macro macro
+    found = []
+    @positions.each_with_index do |p,i|
+      found << i if SXP.read(@parsed[i])[0].to_s == macro.name
+    end
+    found
   end
 
   def find_matching_bracket i
@@ -124,15 +166,15 @@ class SexprParser
   end
 
   def find_sexprs
-    threads = []
+    #threads = []
     @text.each_with_index do |v, i|
       if v == '('
-        threads << Thread.new do
+        #threads << Thread.new do
           find_matching_bracket i
-        end
+        #end
       end
     end
-    threads.each { |t| t.join }
+    #threads.each { |t| t.join }
   end
 end
 

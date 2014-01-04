@@ -125,7 +125,7 @@ module LispMachine
       Proc.new do
         show_eval.call
         last_evaluated = LispMachine.instance_variable_get '@last_evaluated'
-
+        #binding.pry
         if last_evaluated.kind_of? Array and last_evaluated.length > 1
           if last_evaluated[0] == 'const'
             print last_evaluated[1]

@@ -63,6 +63,7 @@ describe "S-Expression extraction" do
     prog = %Q(
         (Do
           (Swap (x) (y))
+          (Swap (a) (b))
           (When (x y z) j)
           (unless (k) (l y) m)
         )
@@ -73,8 +74,6 @@ describe "S-Expression extraction" do
     foo = LispMacro.new 'Swap' do |ast|
       assert_equal 3, ast.length
       assert_equal :Swap, ast[0]
-      assert_equal [:x], ast[1]
-      assert_equal [:y], ast[2]
 
       called = true
       
@@ -94,10 +93,14 @@ describe "S-Expression extraction" do
           
         (y)
         (x)
-      
+
+
+        (b)
+        (a)
+
           (When (x y z) j)
           (unless (k) (l y) m)
-        )).strip, prog.strip
+        )).gsub(/\s+/,''), prog.gsub(/\s+/,'')
   end
   
   it "Allows for argument extraction and complex macros" do
@@ -142,7 +145,8 @@ describe "S-Expression extraction" do
   it "Allows list literals to be built" do
     prog = %Q(
     (Do
-      (Show 
+      (Show (Evaluate (list (:Do (:Show 'hello')))))
+      (Show
         (Evaluate
           (list 
             (:Do 
@@ -165,7 +169,7 @@ describe "S-Expression extraction" do
 
     LispPreprocessor.preprocess prog, MacroList.new([list_literal])
 
-    assert_output "12\n" do
+    assert_output "hello\nhello\n12\n" do
       LispMachine.run prog
     end
   end
