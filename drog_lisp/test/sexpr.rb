@@ -152,6 +152,7 @@ describe "S-Expression extraction" do
             (:Do 
               (:Func :f :x :y )
                 (:Do
+                  (:Show 'inside')
                   (:+ :x :y)
                 )
               (:Call :f 10 2)
@@ -169,9 +170,34 @@ describe "S-Expression extraction" do
 
     LispPreprocessor.preprocess prog, MacroList.new([list_literal])
 
-    assert_output "hello\nhello\n12\n" do
+    assert_output "hello\nhello\ninside\n12\n" do
       LispMachine.run prog
     end
+  end
+
+  it "Allows macros to use other macros in their definition" do
+    prog = %Q(
+    
+    (Do
+      (inc 10)
+    )
+
+    )
+
+    add = LispMacro.new 'add' do |ast|
+      left = ast[1].to_sxp
+      right = ast[2].to_sxp
+      "(+ #{left} #{right})"
+    end
+
+    inc = LispMacro.new 'inc' do |ast|
+      left = ast[1].to_sxp
+      right = 1.to_sxp
+      "(add #{left} #{right})"
+    end
+
+    LispPreprocessor.preprocess prog, MacroList.new([add, inc])
+    assert_equal LispMachine.run(prog), 11
   end
   
 end
