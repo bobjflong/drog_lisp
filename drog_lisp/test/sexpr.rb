@@ -224,16 +224,18 @@ describe "S-Expression extraction" do
           (:Call :inc 1)
         )
       )
+
+      (Show (Evaluate my-prog))
       
       (Let replace-with-minus-args (list ( :setzero :- )))
+      (Send replace-with-minus-args (Car (Cdr (Car (Cdr (my-prog))))))
 
-      (Send replace-with-minus-args (Cdr (Car (Cdr (my-prog)))))
       (Show (Evaluate my-prog))
     )
     """
     LispPreprocessor.preprocess prog, MacroList.new([list_literal])
 
-    assert_output "2\n" do
+    assert_output "2\n0\n" do
       LispMachine.run prog
     end
     
