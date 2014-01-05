@@ -199,5 +199,44 @@ describe "S-Expression extraction" do
     LispPreprocessor.preprocess prog, MacroList.new([add, inc])
     assert_equal LispMachine.run(prog), 11
   end
+
+  it "allows code to be mutated" do
+    list_literal = LispMacro.new 'list' do |ast|
+      elems = ast.drop(1)
+      elems.to_cons
+    end
+
+    class Array
+      def setzero x
+        self[0] = x
+      end
+    end
+  
+    prog = """
+    (Do
+      (Let my-prog
+        (list
+          (:Func :inc :x)
+            (:Do 
+              (:+ :x 1)
+            )
+
+          (:Call :inc 1)
+        )
+      )
+      
+      (Let replace-with-minus-args (list ( :setzero :- )))
+
+      (Send replace-with-minus-args (Cdr (Car (Cdr (my-prog)))))
+      (Show (Evaluate my-prog))
+    )
+    """
+    LispPreprocessor.preprocess prog, MacroList.new([list_literal])
+
+    assert_output "2\n" do
+      LispMachine.run prog
+    end
+    
+  end
   
 end
