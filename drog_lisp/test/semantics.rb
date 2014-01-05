@@ -347,6 +347,14 @@ describe "message sending" do
   
     """), 5
   end
+
+  it "should allow arguments to be passed to ruby native types" do
+    assert_equal (LispMachine.run """
+    (Do
+      (Send (Cons :delete 'h') 'hello')
+    )
+    """), "ello"
+  end
 end
 
 describe "preloading objects" do

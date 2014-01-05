@@ -152,8 +152,12 @@ module LispMachine
       Proc.new do
         message = send_eval.call
         receiver = receiver_eval.call
-
-        set_last_evaluated receiver.send message
+        
+        if not message.kind_of? Array
+          set_last_evaluated receiver.send message
+        else
+          set_last_evaluated receiver.send(message[0], *message.drop(1))
+        end
       end
     end
     
