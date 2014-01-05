@@ -27,8 +27,10 @@ class LispMacro
     @handler = block
   end
 
-  def handle ast, split
+  def handle ast, split, other_macros
     result = @handler.call ast
+
+    LispPreprocessor.preprocess result, other_macros
     split.replace_with result
   end
 end
@@ -58,9 +60,9 @@ class MacroList
     @macros.empty?
   end
 
-  def apply_one_to_prog sxp_parser, prog
+  def apply_one_to_prog sxp_parser, prog, other_macros
     @macros.find do |m|
-      LispPreprocessor.apply_macro_to_prog sxp_parser, m, prog
+      LispPreprocessor.apply_macro_to_prog sxp_parser, m, prog, other_macros
     end
   end
 end
@@ -78,7 +80,7 @@ module LispPreprocessor
     #each round we attempt to apply a macro
     #the sxp_parser needs to be updated if a macro is successfully applied
     while true
-      once_applied = macros.apply_one_to_prog sxp_parser, prog
+      once_applied = macros.apply_one_to_prog sxp_parser, prog, macros
       if once_applied
         sxp_parser = SexprParser.new prog
         sxp_parser.find_sexprs
@@ -88,7 +90,7 @@ module LispPreprocessor
     end
   end
 
-  def self.apply_macro_to_prog sxp_parser, macro, prog
+  def self.apply_macro_to_prog sxp_parser, macro, prog, other_macros
     matching_sxps = sxp_parser.sxps_matching_macro macro
 
    # binding.pry
@@ -97,7 +99,7 @@ module LispPreprocessor
     i = matching_sxps[0]
 
     split = StringSplit.new prog, sxp_parser.positions[i]
-    macro.handle SXP.read(sxp_parser.parsed[i]), split
+    macro.handle SXP.read(sxp_parser.parsed[i]), split, other_macros
     
     return true
   end
