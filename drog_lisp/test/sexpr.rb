@@ -201,7 +201,7 @@ describe "S-Expression extraction" do
   end
 
   it "allows code to be mutated" do
-    list_literal = LispMacro.new 'list' do |ast|
+    list_literal = LispMacro.new '`' do |ast|
       elems = ast.drop(1)
       elems.to_cons
     end
@@ -215,7 +215,7 @@ describe "S-Expression extraction" do
     prog = """
     (Do
       (Let my-prog
-        (list
+        (`
           (:Func :inc :x)
             (:Do 
               (:+ :x 1)
@@ -227,7 +227,7 @@ describe "S-Expression extraction" do
 
       (Show (Evaluate my-prog))
       
-      (Let replace-with-minus-args (list ( :setzero :- )))
+      (Let replace-with-minus-args (`( :setzero :- )))
       (Send replace-with-minus-args (Car (Cdr (Car (Cdr (my-prog))))))
 
       (Show (Evaluate my-prog))
