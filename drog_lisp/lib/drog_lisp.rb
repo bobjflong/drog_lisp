@@ -61,7 +61,7 @@ module LispMachine
     end
 
     def is_cmpd branch
-      (branch.length > 1 and branch[0].kind_of? Array)
+      (branch.kind_of? Array and branch.length > 1 and branch[0].kind_of? Array)
     end
 
     def is_not_cmpd branch
