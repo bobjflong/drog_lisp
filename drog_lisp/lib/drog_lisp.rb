@@ -125,7 +125,6 @@ module LispMachine
       Proc.new do
         show_eval.call
         last_evaluated = LispMachine.instance_variable_get '@last_evaluated'
-        #binding.pry
         if last_evaluated.kind_of? Array and last_evaluated.length > 1
           if last_evaluated[0] == 'const'
             print last_evaluated[1]
@@ -152,11 +151,14 @@ module LispMachine
       Proc.new do
         message = send_eval.call
         receiver = receiver_eval.call
-        
+        begin 
         if not message.kind_of? Array
           set_last_evaluated receiver.send message
         else
           set_last_evaluated receiver.send(message[0], *message.drop(1))
+        end
+        rescue
+          binding.pry
         end
       end
     end
@@ -431,6 +433,7 @@ module LispMachine
           right.call
         end
       end
+
     end
 
     def analyze_call branch
@@ -488,6 +491,7 @@ module LispMachine
     scope.downto(0).each do |level|
       result = LispMachine::SYMBOL_TABLE[level][x.to_sym]
       return result if result
+      return result if LispMachine::SYMBOL_TABLE[level].has_key? x.to_sym
     end
     return nil
   end

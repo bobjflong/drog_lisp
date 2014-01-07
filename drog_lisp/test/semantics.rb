@@ -178,7 +178,7 @@ describe "first class functions" do
           (Do
             (If (Cdr n)
               (Cons (Call f (Car n))
-                (Call apply-list (Cdr n))
+                (Call apply-list (Cdr n) f)
               )
               (Cons (Call f (Car n)) null)
             )
