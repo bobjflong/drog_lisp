@@ -355,6 +355,16 @@ describe "message sending" do
     )
     """), "ello"
   end
+
+  it "should allow static ruby methods to be called" do
+    assert_equal (LispMachine.run """
+    (Do
+      (Let time (Send :new :Time))
+      (Send :class time)
+    )
+    """), Time
+  end
+
 end
 
 describe "preloading objects" do

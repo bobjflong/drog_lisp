@@ -149,8 +149,16 @@ module LispMachine
       receiver_eval = dispatch branch[2]
 
       Proc.new do
-        message = send_eval.call
-        receiver = receiver_eval.call
+        send_eval.call
+        message = LispMachine.instance_variable_get '@last_evaluated'
+
+        receiver_eval.call
+        receiver = LispMachine.instance_variable_get '@last_evaluated'
+        
+        #Map symbol receivers to real equivalents
+        # eg :Time => Time
+        receiver = Kernel.const_get(receiver) if receiver.kind_of? Symbol
+      
       #  begin 
         if not message.kind_of? Array
           set_last_evaluated receiver.send message
