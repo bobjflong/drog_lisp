@@ -151,7 +151,7 @@ module LispMachine
       Proc.new do
         message = send_eval.call
         receiver = receiver_eval.call
-        begin 
+      #  begin 
         if not message.kind_of? Array
           set_last_evaluated receiver.send message
         else
@@ -161,9 +161,9 @@ module LispMachine
             set_last_evaluated receiver.send(message[0], *message.drop(1))
           end
         end
-        rescue
-          binding.pry
-        end
+       # rescue
+          #binding.pry
+        #end
       end
     end
     
@@ -202,8 +202,12 @@ module LispMachine
     def analyze_car(branch)
       list_eval = dispatch branch[1]
       Proc.new do
+        begin
         list_eval.call
         set_last_evaluated LispMachine.instance_variable_get('@last_evaluated')[0]
+        rescue
+          binding.pry
+        end
       end
     end
 
@@ -233,7 +237,7 @@ module LispMachine
         analyzed.each do |a|
           a.call if a.respond_to? :call
         end
-        rescue
+        rescue Exception => e
           binding.pry
         end
       end

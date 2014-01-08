@@ -29,7 +29,6 @@ class LispMacro
 
   def handle ast, split, other_macros
     result = @handler.call ast
-
     LispPreprocessor.preprocess result, other_macros
     split.replace_with result
   end
@@ -62,7 +61,8 @@ class MacroList
 
   def apply_one_to_prog sxp_parser, prog, other_macros
     @macros.find do |m|
-      LispPreprocessor.apply_macro_to_prog sxp_parser, m, prog, other_macros
+      res = LispPreprocessor.apply_macro_to_prog sxp_parser, m, prog, other_macros
+      res
     end
   end
 end
@@ -88,16 +88,15 @@ module LispPreprocessor
         break
       end
     end
+
   end
 
   def self.apply_macro_to_prog sxp_parser, macro, prog, other_macros
     matching_sxps = sxp_parser.sxps_matching_macro macro
 
-   # binding.pry
     return false if matching_sxps.empty?
     
     i = matching_sxps[0]
-
     split = StringSplit.new prog, sxp_parser.positions[i]
     macro.handle SXP.read(sxp_parser.parsed[i]), split, other_macros
     
@@ -122,10 +121,16 @@ class SexprParser
 
   def sxps_matching_macro macro
     found = []
+
     @positions.each_with_index do |p,i|
-      found << i if SXP.read(@parsed[i])[0].to_s == macro.name
+      found << i if get_sxp_name(@parsed[i]) == macro.name
     end
     found
+  end
+
+  def get_sxp_name sxp
+    sxp.match /\([ ]*([^ (]+)/
+    $1.strip
   end
 
   def find_matching_bracket i
@@ -140,7 +145,8 @@ class SexprParser
         count -= 1
         if count == 0
           @mutex.synchronize do
-            @parsed << @raw[start..i]
+            raw = @raw[start..i]
+            @parsed << raw
             @positions << Position.new(start, i)
           end
           return
