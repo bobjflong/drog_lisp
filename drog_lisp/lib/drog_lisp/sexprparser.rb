@@ -61,8 +61,7 @@ class MacroList
 
   def apply_one_to_prog sxp_parser, prog, other_macros
     @macros.find do |m|
-      res = LispPreprocessor.apply_macro_to_prog sxp_parser, m, prog, other_macros
-      res
+      LispPreprocessor.apply_macro_to_prog sxp_parser, m, prog, other_macros
     end
   end
 end
@@ -70,7 +69,7 @@ end
 module LispPreprocessor
   
   def self.preprocess prog, macros
-    LispPreprocessor.apply_macros_to_prog macros, prog 
+    LispPreprocessor.apply_macros_to_prog macros, prog
   end
 
   def self.apply_macros_to_prog macros, prog
@@ -120,12 +119,10 @@ class SexprParser
   end
 
   def sxps_matching_macro macro
-    found = []
-
     @positions.each_with_index do |p,i|
-      found << i if get_sxp_name(@parsed[i]) == macro.name
+      return [i] if get_sxp_name(@parsed[i]) == macro.name
     end
-    found
+    []
   end
 
   def get_sxp_name sxp
@@ -177,9 +174,7 @@ class SexprParser
     threads = []
     @text.each_with_index do |v, i|
       if v == '('
-        threads << Thread.new do
-          find_matching_bracket i
-        end
+        find_matching_bracket i
       end
     end
     threads.each { |t| t.join }
