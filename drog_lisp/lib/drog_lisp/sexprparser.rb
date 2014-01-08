@@ -69,7 +69,7 @@ end
 module LispPreprocessor
   
   def self.preprocess prog, macros
-    LispPreprocessor.apply_macros_to_prog macros, prog
+    LispPreprocessor.apply_macros_to_prog macros, prog 
   end
 
   def self.apply_macros_to_prog macros, prog
