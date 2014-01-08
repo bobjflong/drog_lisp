@@ -17,7 +17,7 @@ Do
       (Let f-deriv-xo (Call estimate-derivative-of f xo))
 
       (Let new-root (- xo (/ f-xo f-deriv-xo)))
-
+      
       (Let difference (Send :abs (- new-root last-root)))
 
       (Let converged (< difference (/ 1 10)))

@@ -155,7 +155,11 @@ module LispMachine
         if not message.kind_of? Array
           set_last_evaluated receiver.send message
         else
-          set_last_evaluated receiver.send(message[0], *message.drop(1))
+          if message.length == 2 and message[1].kind_of? Array
+            set_last_evaluated receiver.send(message[0], message.drop(1))
+          else  
+            set_last_evaluated receiver.send(message[0], *message.drop(1))
+          end
         end
         rescue
           binding.pry
@@ -225,8 +229,12 @@ module LispMachine
     def analyze_compound(branch)
       analyzed = branch.map { |b| dispatch(b) }
       Proc.new do
+        begin
         analyzed.each do |a|
           a.call if a.respond_to? :call
+        end
+        rescue
+          binding.pry
         end
       end
     end
@@ -276,7 +284,8 @@ module LispMachine
 
 
       Proc.new do
-        to_return = result.clone 
+        to_return = result.clone
+        LispMachine::SYMBOL_TABLE[-1][name.to_sym] = to_return
         LanguageHelpers::close_over_variables branch, to_return
         set_last_evaluated to_return
       end
@@ -619,6 +628,7 @@ module LispMachine
       end
        
       if not func_find or func_find[:type] != 'definition'
+        binding.pry
         throw :no_such_function
       else
         
