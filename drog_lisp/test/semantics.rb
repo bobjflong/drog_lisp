@@ -3,6 +3,30 @@ require 'minitest/autorun'
 require 'drog_lisp'
 require 'ostruct'
 
+describe "comments" do
+  it "allows comments to be written using semicolon" do
+    assert_output "hello world\n" do
+      LispMachine.run """
+        (Do
+          ; This prints out hello world
+          (Show \"hello world\")
+        )
+      """
+    end
+  end
+
+  it "doesn't interfere with semicolons in strings" do
+    assert_output "hello; world\n" do
+      LispMachine.run """
+      (Do
+        ; This is a comment
+        (Show \"hello; world\")
+      )
+      """
+    end
+  end
+end
+
 describe "structs" do
   it "can create an underlying OpenStruct given field parameters" do
     assert_equal (LispMachine.run """

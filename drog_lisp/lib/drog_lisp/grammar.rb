@@ -103,6 +103,7 @@ class Parser < Whittle::Parser
       n[1..-2]
     end
   end
+  rule(:comment => /\;[^\n]*$/).skip!
   
   rule(:expr) do |r|
     r["(", :do, :expression_list, ")"].as { |_,_,a,_| a }

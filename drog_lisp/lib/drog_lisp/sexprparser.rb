@@ -115,7 +115,6 @@ class SexprParser
     @raw = text
     @parsed = []
     @positions = []
-    @mutex = Mutex.new
   end
 
   def sxps_matching_macro macro
@@ -126,7 +125,7 @@ class SexprParser
   end
 
   def get_sxp_name sxp
-    sxp.match /\([ ]*([^ (]+)/
+    sxp.match /\([ ]*([^ ()$]+)/
     $1.strip
   end
 
@@ -141,11 +140,9 @@ class SexprParser
 
         count -= 1
         if count == 0
-          @mutex.synchronize do
-            raw = @raw[start..i]
-            @parsed << raw
-            @positions << Position.new(start, i)
-          end
+          raw = @raw[start..i]
+          @parsed << raw
+          @positions << Position.new(start, i)
           return
         end
       end
