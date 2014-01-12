@@ -52,7 +52,7 @@ describe "structs" do
         (Do
           (Let bob (Struct name age))
           (Set-age bob 21)
-          (Set-name bob 'bob')
+          (Set-name bob \"bob\")
           (Show bob)
         )
       """)
@@ -65,7 +65,7 @@ describe "structs" do
         (Do
           (Let bob (Struct name age))
           (Set-age bob 21)
-          (Set-name bob 'bob')
+          (Set-name bob \"bob\")
           (Show (Get-name bob))
         )
       """)
@@ -99,7 +99,7 @@ describe "tail optimization" do
         (Func loop x)
           (Do
             (If (= x 100000)
-              (Show 'done')
+              (Show \"done\")
               (RecCall loop (+ x 1))
             )
           )
@@ -375,7 +375,7 @@ describe "message sending" do
   it "should allow arguments to be passed to ruby native types" do
     assert_equal (LispMachine.run """
     (Do
-      (Send (Cons :delete 'h') 'hello')
+      (Send (Cons :delete \"h\") \"hello\")
     )
     """), "ello"
   end

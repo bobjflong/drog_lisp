@@ -145,14 +145,14 @@ describe "S-Expression extraction" do
   it "Allows list literals to be built" do
     prog = %Q(
     (Do
-      (Show (Evaluate (list (:Do (:Show 'hello')))))
+      (Show (Evaluate (list (:Do (:Show \"hello\")))))
       (Show
         (Evaluate
           (list 
             (:Do 
               (:Func :f :x :y )
                 (:Do
-                  (:Show 'inside')
+                  (:Show \"inside\")
                   (:+ :x :y)
                 )
               (:Call :f 10 2)

@@ -159,7 +159,7 @@ module LispMachine
         # eg :Time => Time
         receiver = Kernel.const_get(receiver) if receiver.kind_of? Symbol
       
-      #  begin 
+        begin 
         if not message.kind_of? Array
           set_last_evaluated receiver.send message
         else
@@ -169,9 +169,9 @@ module LispMachine
             set_last_evaluated receiver.send(message[0], *message.drop(1))
           end
         end
-       # rescue
-          #binding.pry
-        #end
+        rescue
+          binding.pry
+        end
       end
     end
     
