@@ -169,7 +169,7 @@ module LispMachine
             set_last_evaluated receiver.send(message[0], *message.drop(1))
           end
         end
-        rescue
+        rescue Exception => e
           binding.pry
         end
       end
@@ -592,7 +592,7 @@ module LispMachine
       if (branch.length > POSITION_OF_COMPLEX_ARGS_START) then
         args = []
         
-        flattened = branch#.flatten(1)
+        flattened = branch
         POSITION_OF_COMPLEX_ARGS_START.upto(branch.length - 1).each do |i|
           wrapper = [branch[i]]
           LispMachine.interpret wrapper

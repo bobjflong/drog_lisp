@@ -196,7 +196,7 @@ LispMachine.run """
 (Do
   (Let bob (Struct name age))
     (Set-age bob 21)
-    (Set-name bob 'bob')
+    (Set-name bob "bob")
     (Show (Get-name bob))
 )
 """
@@ -272,7 +272,7 @@ LispMachine.run """
   (Func loop x)
     (Do
       (If (= x 100000)
-        (Show 'done')
+        (Show "done")
         (RecCall loop (+ x 1))
       )
     )
@@ -297,4 +297,5 @@ len = LispMachine.run """
 
 # len = 5
 ```
+
 
