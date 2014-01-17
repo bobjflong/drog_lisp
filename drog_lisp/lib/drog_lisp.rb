@@ -311,7 +311,7 @@ module LispMachine
         operand_2_eval.call
         operand_2 = LispMachine.instance_variable_get('@last_evaluated')
 
-        set_last_evaluated (operand_1 < operand_2)
+        set_last_evaluated(operand_1 < operand_2)
       end
     end
 
@@ -324,7 +324,7 @@ module LispMachine
         operand_2_eval.call
         operand_2 = LispMachine.instance_variable_get('@last_evaluated')
 
-        set_last_evaluated (operand_1 > operand_2)
+        set_last_evaluated(operand_1 > operand_2)
       end
     end
 
@@ -338,7 +338,7 @@ module LispMachine
         operand_2_eval.call
         operand_2 = LispMachine.instance_variable_get('@last_evaluated')
 
-        set_last_evaluated (operand_1 + operand_2)
+        set_last_evaluated(operand_1 + operand_2)
       end
     end
 
@@ -352,7 +352,7 @@ module LispMachine
         operand_2_eval.call
         operand_2 = LispMachine.instance_variable_get('@last_evaluated')
 
-        set_last_evaluated (operand_1 - operand_2)
+        set_last_evaluated(operand_1 - operand_2)
       end
     end
 
@@ -366,7 +366,7 @@ module LispMachine
         operand_2_eval.call
         operand_2 = LispMachine.instance_variable_get('@last_evaluated')
 
-        set_last_evaluated (operand_1 * operand_2)
+        set_last_evaluated(operand_1 * operand_2)
       end
     end
     
@@ -380,7 +380,7 @@ module LispMachine
         operand_2_eval.call
         operand_2 = LispMachine.instance_variable_get('@last_evaluated')
 
-        set_last_evaluated (operand_1.to_f / operand_2)
+        set_last_evaluated(operand_1.to_f / operand_2)
       end
     end
 
@@ -394,7 +394,7 @@ module LispMachine
         operand_2_eval.call
         operand_2 = LispMachine.instance_variable_get('@last_evaluated')
 
-        set_last_evaluated (operand_1.to_f % operand_2)
+        set_last_evaluated(operand_1.to_f % operand_2)
       end
     end
     
@@ -408,7 +408,7 @@ module LispMachine
         operand_2_eval.call
         operand_2 = LispMachine.instance_variable_get('@last_evaluated')
 
-        set_last_evaluated (operand_1 == operand_2)
+        set_last_evaluated(operand_1 == operand_2)
       end
     end
     
