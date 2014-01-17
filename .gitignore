@@ -8,3 +8,5 @@ drog_lisp/examples/is_prime.drog
 drog_lisp/examples/dir/der.drog
 
 drog_lisp/examples/dir/run.rb
+
+.chocbuild/*

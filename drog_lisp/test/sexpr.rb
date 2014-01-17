@@ -240,5 +240,36 @@ describe "S-Expression extraction" do
     end
     
   end
+
+  it "allows the example from the blog" do
+    list_literal = LispMacro.new '`' do |ast|
+      elems = ast.drop(1)
+      elems.to_cons
+    end
   
+    prog = """
+      (Do
+        (Let my-prog
+          (`
+            (:Do (:Func :add :x :y)
+              (:Do 
+                (:+ :x :y)
+              )
+
+            (:Call :add 1 2)
+            )
+          )
+        )
+
+        (Show (Evaluate my-prog))
+      )
+    """
+    
+    LispPreprocessor.preprocess prog, MacroList.new([list_literal])
+
+    assert_output "3\n" do
+      LispMachine.run prog
+    end
+  end
+
 end

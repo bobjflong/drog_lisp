@@ -179,7 +179,7 @@ module LispMachine
       eval_eval = dispatch branch[1]
       
       Proc.new do
-        to_eval = eval_eval.call
+        eval_eval.call
 
         program = LispMachine.instance_variable_get '@last_evaluated'
         sexp = nil
@@ -282,7 +282,6 @@ module LispMachine
 
     def analyze_def(branch)
       name = branch[1]
-      params = branch[2]
       
       result = {
         type: 'definition',
@@ -592,7 +591,6 @@ module LispMachine
       if (branch.length > POSITION_OF_COMPLEX_ARGS_START) then
         args = []
         
-        flattened = branch
         POSITION_OF_COMPLEX_ARGS_START.upto(branch.length - 1).each do |i|
           wrapper = [branch[i]]
           LispMachine.interpret wrapper
