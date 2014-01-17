@@ -234,8 +234,8 @@ class Parser < Whittle::Parser
   end
 
   rule(:argument_list) do |r|
-    r[:deducted_value].as { |d| d }
-    r[:deducted_value, :argument_list].as { |n, a| ([n] + [a]) }
+    r[:inner_expr].as { |d| d }
+    r[:inner_expr, :argument_list].as { |n, a| ([n] + [a]) }
   end
 
   start(:expr)
