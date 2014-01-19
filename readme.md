@@ -1,6 +1,19 @@
 ##drog_lisp
 
-Embedded functional language for Ruby --- resembles scheme/lisp but with unique semantics. Code example (estimating square root using Newton's method and numerical differentiation): https://gist.github.com/bobjflong/7984315
+Embedded functional language for Ruby --- resembles scheme/lisp but with unique semantics.
+
+
+#####Key features
+* First class functions
+* Closures
+* Powerful macros, writable in Ruby
+* Uses Ruby types, fully interoperable with Ruby
+* Homoiconicity - write code that writes code
+* Tail call optimization
+
+#####Code samples:
+* [Numerical differentiation + Newton's method](https://gist.github.com/bobjflong/7984315)
+* [A static site generator](https://github.com/bobjflong/brig)
 
 #####Examples:
 ######Recursive factorial:
@@ -104,7 +117,7 @@ LispMachine.run """
           (Let x (+ x val))
         )
     )
-    
+
   (Let my-adder (Call create-adder 5))
   (Show (Call my-adder 5))
   (Show (Call my-adder 5))
@@ -160,11 +173,11 @@ LispMachine.run """
     (Do
       (Show 2)
       (Let other-routine (CallCC other-routine))
-      
+
       (Show 4)
       (Let other-routine (CallCC other-routine))
     )
-  
+
   (Func routine-odd other-routine)
     (Do
       (Show 1)
@@ -173,7 +186,7 @@ LispMachine.run """
       (Show 3)
       (Let other-routine (CallCC other-routine))
     )
-  
+
   (Call routine-odd routine-even)
 
 )
@@ -210,21 +223,21 @@ drog\_lisp includes an optional preprocessor that lets you design your own synta
 require 'drog_lisp/sexprparser'
 
 letin = LispMacro.new 'letin' do |ast|
-      
+
   body = ast[-1].to_sxp
-  
+
   func_params = ''
   func_args   = ''
-  
+
   ast[1..-2].each do |param|
     func_params += "#{param[0].to_sxp} "
     func_args += "#{param[1].to_sxp} "
   end
-  
+
   %Q(
     (Func tmp #{func_params})
       #{body}
-  
+
     (Call tmp #{func_args})
   )
 end
@@ -250,13 +263,13 @@ Build up your own expressions as data, then execute them:
 
 ```ruby
 LispMachine.run """
-    
+
 (Do
   (Let operator :+)
   (Let my-calc (Cons operator (Cons 1 2)))
   (Evaluate my-calc)
 )
-    
+
 """
 
 #=> 3
@@ -297,6 +310,5 @@ len = LispMachine.run """
 
 # len = 5
 ```
-
 
 
