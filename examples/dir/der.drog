@@ -1,0 +1,55 @@
+(
+Do
+
+  (Func estimate-derivative-of f x)
+    (Do
+      (Let h (/ 1 100000 ))
+      (Let f-of-x-plus-h (Call f (+ x h)))
+      
+      (/ (- f-of-x-plus-h (Call f x)) h)
+    
+    )
+
+  (Func newton-raphson f last-root)
+    (Do
+      (Let xo (+ 0 last-root))
+      (Let f-xo (Call f xo))
+      (Let f-deriv-xo (Call estimate-derivative-of f xo))
+
+      (Let new-root (- xo (/ f-xo f-deriv-xo)))
+      
+      (Let difference (difference between new-root and last-root))
+
+      (Let converged (small-enough difference))
+      (If (converged)
+        new-root
+        (RecCall newton-raphson f new-root)
+      )
+    )
+  
+  (Func find-square-root w)
+    (Do
+      (Func f-sqrt x ~(w))
+        (Do
+          (- (* x x) w)
+        )
+      (Call newton-raphson f-sqrt (/ w 2))
+    )
+
+  (Show (Call find-square-root 12312))
+  (Show (Call find-square-root 10))
+  (Show (Call find-square-root 5))
+
+  (Let a (Cons 1 (Cons 2 (Cons 3 (Cons 4 (Cons 5 null))))))
+  (Show a)
+
+  (until a is empty
+    (Do
+      (Show (Car a))
+      (Let a (Cdr a))
+    )
+  )
+
+  (Show (equal? 1 1))
+
+)
