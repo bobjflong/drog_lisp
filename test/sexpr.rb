@@ -271,5 +271,22 @@ describe "S-Expression extraction" do
       LispMachine.run prog
     end
   end
-
+  
+  it "does not interfere with brackets in strings" do
+    display = LispMacro.new "display" do |ast|
+      """(Show #{ast[1].to_sxp})"""
+    end
+    
+    prog = """
+    (Do
+      (display \"hello :)\")
+    )
+    """
+    
+    LispPreprocessor.preprocess prog, MacroList.new([display])
+    
+    assert_output "hello :)\n" do
+      LispMachine.run prog
+    end
+  end
 end

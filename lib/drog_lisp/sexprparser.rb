@@ -133,10 +133,15 @@ class SexprParser
     i = i + 1
     start = i - 1
     count = 1
+    in_string = false
     
     while true
       next_val = @text[i]
-      if next_val == ')'
+      if next_val == '"'
+        in_string = in_string ? false : true
+      end
+      
+      if next_val == ')' and not in_string
 
         count -= 1
         if count == 0
@@ -169,8 +174,13 @@ class SexprParser
 
   def find_sexprs
     threads = []
+    in_string = false
+    
     @text.each_with_index do |v, i|
-      if v == '('
+      if v == '"'
+        in_string = in_string ? false : true
+      end
+      if v == '(' and not in_string
         find_matching_bracket i
       end
     end
