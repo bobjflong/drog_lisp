@@ -68,9 +68,9 @@ print LispMachine.run """
 # => [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
 ```
 
-######Enforcing lexical scoping + closures
+######Closures
 
-You can store values alongside function definitions to enforce lexical scoping and closure functionality using the tilde "~" directive:
+You can store values alongside function definitions to create closures using the tilde "~" directive:
 
 ```ruby
 LispMachine.run """
