@@ -19,6 +19,32 @@ module LispMachine
         '/' => 'div',
         '%' => 'mod'
       }
+
+      @replace_ops_dictionary.keys.each do |op|
+        create_handler_for op
+      end
+    end
+
+    def to_ruby_operator op
+      op == '=' ? '==' : op
+    end
+
+    # Generate a analyzer-handler for a basic two-operatand operator
+    # eg. create_handler '+'
+    # => def analyze_add; Proc.new { } end
+    def create_handler_for op
+      self.class.send(:define_method, "analyze_#{@replace_ops_dictionary[op]}") do |branch|
+        operand_1_eval = dispatch branch[1]
+        operand_2_eval = dispatch branch[2]
+        Proc.new do
+          operand_1_eval.call
+          operand_1 = LispMachine.instance_variable_get('@last_evaluated')
+          operand_2_eval.call
+          operand_2 = LispMachine.instance_variable_get('@last_evaluated')
+
+          set_last_evaluated(operand_1.send(to_ruby_operator(op).to_sym, operand_2))
+        end
+      end
     end
 
     def replace_ops op
@@ -299,116 +325,6 @@ module LispMachine
         LispMachine::SYMBOL_TABLE[-1][name.to_sym] = to_return
         LanguageHelpers::close_over_variables branch, to_return
         set_last_evaluated to_return
-      end
-    end
-
-    def analyze_lt(branch)
-      operand_1_eval = dispatch branch[1]
-      operand_2_eval = dispatch branch[2]
-      Proc.new do
-        operand_1_eval.call
-        operand_1 = LispMachine.instance_variable_get('@last_evaluated')
-        operand_2_eval.call
-        operand_2 = LispMachine.instance_variable_get('@last_evaluated')
-
-        set_last_evaluated(operand_1 < operand_2)
-      end
-    end
-
-    def analyze_gt(branch)
-      operand_1_eval = dispatch branch[1]
-      operand_2_eval = dispatch branch[2]
-      Proc.new do
-        operand_1_eval.call
-        operand_1 = LispMachine.instance_variable_get('@last_evaluated')
-        operand_2_eval.call
-        operand_2 = LispMachine.instance_variable_get('@last_evaluated')
-
-        set_last_evaluated(operand_1 > operand_2)
-      end
-    end
-
-    def analyze_add(branch)
-      operand_1_eval = dispatch branch[1]
-      operand_2_eval = dispatch branch[2]
-
-      Proc.new do
-        operand_1_eval.call
-        operand_1 = LispMachine.instance_variable_get('@last_evaluated')
-        operand_2_eval.call
-        operand_2 = LispMachine.instance_variable_get('@last_evaluated')
-
-        set_last_evaluated(operand_1 + operand_2)
-      end
-    end
-
-    def analyze_sub(branch)
-      operand_1_eval = dispatch branch[1]
-      operand_2_eval = dispatch branch[2]
-
-      Proc.new do
-        operand_1_eval.call
-        operand_1 = LispMachine.instance_variable_get('@last_evaluated')
-        operand_2_eval.call
-        operand_2 = LispMachine.instance_variable_get('@last_evaluated')
-
-        set_last_evaluated(operand_1 - operand_2)
-      end
-    end
-
-    def analyze_mul(branch)
-      operand_1_eval = dispatch branch[1]
-      operand_2_eval = dispatch branch[2]
-
-      Proc.new do
-        operand_1_eval.call
-        operand_1 = LispMachine.instance_variable_get('@last_evaluated')
-        operand_2_eval.call
-        operand_2 = LispMachine.instance_variable_get('@last_evaluated')
-
-        set_last_evaluated(operand_1 * operand_2)
-      end
-    end
-    
-    def analyze_div(branch)
-      operand_1_eval = dispatch branch[1]
-      operand_2_eval = dispatch branch[2]
-
-      Proc.new do
-        operand_1_eval.call
-        operand_1 = LispMachine.instance_variable_get('@last_evaluated')
-        operand_2_eval.call
-        operand_2 = LispMachine.instance_variable_get('@last_evaluated')
-
-        set_last_evaluated(operand_1.to_f / operand_2)
-      end
-    end
-
-    def analyze_mod(branch)
-      operand_1_eval = dispatch branch[1]
-      operand_2_eval = dispatch branch[2]
-
-      Proc.new do
-        operand_1_eval.call
-        operand_1 = LispMachine.instance_variable_get('@last_evaluated')
-        operand_2_eval.call
-        operand_2 = LispMachine.instance_variable_get('@last_evaluated')
-
-        set_last_evaluated(operand_1.to_f % operand_2)
-      end
-    end
-    
-    def analyze_eq(branch)
-      operand_1_eval = dispatch branch[1]
-      operand_2_eval = dispatch branch[2]
-
-      Proc.new do
-        operand_1_eval.call
-        operand_1 = LispMachine.instance_variable_get('@last_evaluated')
-        operand_2_eval.call
-        operand_2 = LispMachine.instance_variable_get('@last_evaluated')
-
-        set_last_evaluated(operand_1 == operand_2)
       end
     end
     
