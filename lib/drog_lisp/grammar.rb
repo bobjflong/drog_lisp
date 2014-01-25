@@ -94,7 +94,7 @@ class Parser < Whittle::Parser
   rule(:let => /Let/).as { |l| l }
   rule(:if => /If/).as { |i| i }
   rule(:show => /Show/).as { |s| s }
-  rule(:name => /[a-zA-Z\-\?]+/).as { |n| n }
+  rule(:name => /[a-zA-Z\-\_\?]+/).as { |n| n }
   rule(:reserved => /[\+\-\\\*]/).as { |n| n }
   rule(:const => /([0-9]+)|((\")[^\"]*(\"))/).as do |n| 
     if not n[0] == '"'  then
@@ -174,6 +174,10 @@ class Parser < Whittle::Parser
       GrammarHelpers::gather_arguments result, a 
     end
 
+    r["(", :call, :inner_expr, :argument_list, ")"].as do |_,_,n,a|
+      result = [Tokens::CALL, n]
+      GrammarHelpers::gather_arguments result, a 
+    end
 
     r["(", :reccall, :name, :argument_list, ")"].as do |_,_,n,a|
       result = [Tokens::RECCALL, n]

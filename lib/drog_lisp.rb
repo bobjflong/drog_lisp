@@ -378,18 +378,28 @@ module LispMachine
         dispatch a
       end
 
+      #do we need to analyze the function?
+      analyzed_func = nil
+      analyzed_func = dispatch(branch[1]) unless branch[1].kind_of?(String)
+
       Proc.new do
+        func = analyzed_func ? begin
+          analyzed_func.call
+          LispMachine.instance_variable_get '@last_evaluated'
+        end : nil
 
         arguments_to_pass = analyzed_args.map do |a|
           a.call
           LispMachine.instance_variable_get '@last_evaluated'
         end
+
+        func_name = branch[1].kind_of?(String) ? branch[1] : '_'
         
         arguments_for_function_call = {
-          func_name: branch[1],
+          func_name: func_name,
+          func: func, 
           args: arguments_to_pass 
         }
-
         LispMachine::LanguageHelpers.map_params_for_function arguments_for_function_call
       end
     end
@@ -542,7 +552,12 @@ module LispMachine
 
 
       #puts "self.map_params_for_function #{args} #{cc}"
-      func_find = LispMachine::lookup(LispMachine::SYMBOL_TABLE.length - 1, args[:func_name])
+      func_find = nil
+      if args[:func]
+        func_find = args[:func]
+      else
+        func_find = LispMachine::lookup(LispMachine::SYMBOL_TABLE.length - 1, args[:func_name])
+      end
 
       if func_find.kind_of? Continuation and cc
         LispMachine.instance_variable_set('@last_evaluated', args[:args][0])
@@ -569,7 +584,11 @@ module LispMachine
         reclosed = LanguageHelpers.pass_execution_to_function func_find
 
         if reclosed
-          LispMachine::lookup(LispMachine::SYMBOL_TABLE.length - 1, args[:func_name])[:closed_over] = reclosed
+          if args[:func]
+            args[:func][:closed_over] = reclosed
+          else
+            LispMachine::lookup(LispMachine::SYMBOL_TABLE.length - 1, args[:func_name])[:closed_over] = reclosed
+          end
         end
 
       end

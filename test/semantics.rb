@@ -3,6 +3,58 @@ require 'minitest/autorun'
 require 'drog_lisp'
 require 'ostruct'
 
+describe "immediate function execution" do
+  it "allows functions to be defined and evaluated immediately" do
+    assert_equal 10, LispMachine.run(%Q(
+        (Do
+          (Func _ x y z)
+            (Do
+              (Func _ void ~(x y z))
+              (Do
+                ( * z ( + x y ) )
+              )
+            )
+          (Call (Call _ 4 1 2) void)
+        )
+      )
+    )
+  end
+  
+  it "allows function definitions in Call directives" do
+    assert_equal 13, LispMachine.run(%Q(
+          (Do
+
+            (Call
+              
+              (Func add x y)
+                (Do (+ x y))
+            
+            10 3)
+        )
+      )
+    )
+  end
+
+  it "allows anonymous functions" do
+    assert_equal 42, LispMachine.run(%Q(
+        (Do
+          (Call
+            (Func _ void)
+              (Do
+                (Call
+                  (Func _ x)
+                    (Do x)
+                  42
+                )
+              )
+            void
+          )
+        )
+      )
+    )
+  end
+end
+
 describe "comments" do
   it "allows comments to be written using semicolon" do
     assert_output "hello world\n" do
