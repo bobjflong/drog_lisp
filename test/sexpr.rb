@@ -289,4 +289,24 @@ describe "S-Expression extraction" do
       LispMachine.run prog
     end
   end
+
+  it "allows macros to be recursive" do
+    tester = LispMacro.new 'test2' do |ast|
+      if ast.length == 2
+        "( + 1 2 )"
+      else
+        "( test2 one )"
+      end
+    end
+
+    prog = %Q(
+      (Do
+        (test2)
+      )
+    )
+
+    LispPreprocessor.preprocess prog, MacroList.new([tester])
+    assert_equal 3, LispMachine.run(prog)
+
+  end
 end

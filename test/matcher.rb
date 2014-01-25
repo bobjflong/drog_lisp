@@ -11,7 +11,8 @@ describe "the drog_pattern array helper" do
       ast.drog_pattern 'having:variables:body' do |vars|
         
         #Grab entries from AST pattern
-        having, variables, body = vars[:having], vars[:variables], vars[:body].take(1)
+        having, variables, body = vars[:having], vars[:variables], 
+          vars[:body].take(1)
         
         #Extract the binding names
         names = variables.map { |v| v[0] }
