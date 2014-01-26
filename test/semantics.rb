@@ -150,7 +150,7 @@ describe "tail optimization" do
       (Do
         (Func loop x)
           (Do
-            (If (= x 100000)
+            (If (= x 10000)
               (Show \"done\")
               (RecCall loop (+ x 1))
             )
@@ -456,13 +456,11 @@ describe "preloading objects" do
 
     assert_output "woof\n" do
    
-      LispMachine.preload({ mydog: jim })
-      
       LispMachine.run """
       (Do
         (Send :bark mydog)
       )
-      """
+      """, { mydog: jim }
     end
 
   end
@@ -496,7 +494,5 @@ describe "logic operations" do
     """), true
   end
 end
-
-
 
 

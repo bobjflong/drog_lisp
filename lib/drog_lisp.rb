@@ -4,11 +4,13 @@ require 'ostruct'
 require 'continuation'
 require 'pry'
 
-module LispMachine
+class LispMachine
   
   class Analyzer
 
-    def initialize
+    attr_accessor :machine
+
+    def initialize machine
       @replace_ops_dictionary = {
         '<' => 'lt',
         '>' => 'gt',
@@ -23,6 +25,12 @@ module LispMachine
       @replace_ops_dictionary.keys.each do |op|
         create_handler_for op
       end
+
+      @machine = machine
+    end
+
+    def machine
+      @machine
     end
 
     def to_ruby_operator op
@@ -37,11 +45,11 @@ module LispMachine
         operand_1_eval = dispatch branch[1]
         operand_2_eval = dispatch branch[2]
         Proc.new do
-          operand_1_eval.call
-          operand_1 = LispMachine.instance_variable_get('@last_evaluated')
-          operand_2_eval.call
-          operand_2 = LispMachine.instance_variable_get('@last_evaluated')
 
+          operand_1_eval.call
+          operand_1 = machine.last_evaluated
+          operand_2_eval.call
+          operand_2 = machine.last_evaluated
           set_last_evaluated(operand_1.send(to_ruby_operator(op).to_sym, operand_2))
         end
       end
@@ -53,6 +61,7 @@ module LispMachine
       elsif @replace_ops_dictionary.has_key? op
         @replace_ops_dictionary[op]
       else
+        @analyzer = Analyzer.new self
         op
       end
     end
@@ -67,7 +76,7 @@ module LispMachine
     end
 
     def set_last_evaluated ans
-      LispMachine.instance_variable_set '@last_evaluated', ans
+      machine.last_evaluated = ans
     end
 
     def analyze_loopuntil(branch)
@@ -77,7 +86,7 @@ module LispMachine
       Proc.new do
         while true
           pred_eval.call
-          if not LispMachine.instance_variable_get('@last_evaluated')
+          if not machine.last_evaluated
             body.call
           else
             break
@@ -108,11 +117,11 @@ module LispMachine
       right_eval = dispatch branch[2]
       Proc.new do
         left_eval.call
-        left = LispMachine.instance_variable_get '@last_evaluated'
+        left = machine.last_evaluated
 
         right_eval.call
 
-        right = LispMachine.instance_variable_get '@last_evaluated'
+        right = machine.last_evaluated
         
         if not right
           set_last_evaluated left
@@ -150,7 +159,7 @@ module LispMachine
       
       Proc.new do
         show_eval.call
-        last_evaluated = LispMachine.instance_variable_get '@last_evaluated'
+        last_evaluated = machine.last_evaluated
         if last_evaluated.kind_of? Array and last_evaluated.length > 1
           if last_evaluated[0] == 'const'
             print last_evaluated[1]
@@ -166,7 +175,7 @@ module LispMachine
 
     def analyze_reccall(branch)
       Proc.new do
-        LispMachine.instance_variable_set('@tail_call', branch)
+        machine.tail_call = branch
       end
     end
 
@@ -176,10 +185,10 @@ module LispMachine
 
       Proc.new do
         send_eval.call
-        message = LispMachine.instance_variable_get '@last_evaluated'
+        message = machine.last_evaluated
 
         receiver_eval.call
-        receiver = LispMachine.instance_variable_get '@last_evaluated'
+        receiver = machine.last_evaluated
         
         #Map symbol receivers to real equivalents
         # eg :Time => Time
@@ -207,7 +216,7 @@ module LispMachine
       Proc.new do
         eval_eval.call
 
-        program = LispMachine.instance_variable_get '@last_evaluated'
+        program = machine.last_evaluated
         sexp = nil
 
         if not program[0] == :Do
@@ -215,7 +224,7 @@ module LispMachine
         else
           sexp = program.to_sxp
         end
-        LispMachine.run sexp
+        set_last_evaluated(LispMachine.run(sexp))
       end
     end
 
@@ -228,7 +237,7 @@ module LispMachine
           # Give passed function the continuation as only parameter
           params = { func_name: func_to_call, args: args }
 
-          LispMachine::LanguageHelpers.map_params_for_function params, true
+          machine.map_params_for_function params, true
         end
       end
     end
@@ -238,7 +247,7 @@ module LispMachine
       Proc.new do
         begin
         list_eval.call
-        set_last_evaluated LispMachine.instance_variable_get('@last_evaluated')[0]
+        set_last_evaluated machine.last_evaluated[0]
         rescue
           binding.pry
         end
@@ -249,7 +258,7 @@ module LispMachine
       list_eval = dispatch branch[1]
       Proc.new do
         list_eval.call
-        result = LispMachine.instance_variable_get('@last_evaluated').drop 1
+        result = machine.last_evaluated.drop 1
         if result.empty?
           set_last_evaluated nil
         else
@@ -283,12 +292,12 @@ module LispMachine
       value_to_set = match_struct_name(branch[1])
       Proc.new do
         struct_eval.call
-        struct = LispMachine.instance_variable_get '@last_evaluated'
+        struct = machine.last_evaluated
 
         val_eval.call
-        val = LispMachine.instance_variable_get '@last_evaluated'
+        val = machine.last_evaluated
         
-        LispMachine::LanguageHelpers.check_for_struct struct, value_to_set
+        machine.check_for_struct struct, value_to_set
 
         struct.send "#{value_to_set}=", val
       end
@@ -299,9 +308,9 @@ module LispMachine
       value_to_get = match_struct_name(branch[1])
       Proc.new do
         struct_eval.call
-        struct = LispMachine.instance_variable_get '@last_evaluated'
+        struct = machine.last_evaluated
         
-        LispMachine::LanguageHelpers.check_for_struct struct, value_to_get
+        machine.check_for_struct struct, value_to_get
         set_last_evaluated(struct.send value_to_get)
       end      
     end
@@ -312,25 +321,25 @@ module LispMachine
       result = {
         type: 'definition',
         contents: dispatch(branch[-1]),
-        arguments: LispMachine::LanguageHelpers::extract_args_from_definition(branch),
+        arguments: machine.extract_args_from_definition(branch),
         name: name 
       }
             
-      LispMachine::SYMBOL_TABLE[-1][name.to_sym] = result
-      LanguageHelpers::close_over_variables branch, result
+      machine.SYMBOL_TABLE[-1][name.to_sym] = result
+      machine.close_over_variables branch, result
 
 
       Proc.new do
         to_return = result.clone
-        LispMachine::SYMBOL_TABLE[-1][name.to_sym] = to_return
-        LanguageHelpers::close_over_variables branch, to_return
+        machine.SYMBOL_TABLE[-1][name.to_sym] = to_return
+        machine.close_over_variables branch, to_return
         set_last_evaluated to_return
       end
     end
     
     def analyze_struct(branch)
       Proc.new do
-        set_last_evaluated(LispMachine::LanguageHelpers.create_struct_from branch)
+        set_last_evaluated(machine.create_struct_from branch)
       end
     end
 
@@ -338,8 +347,8 @@ module LispMachine
       to_let = dispatch branch[2]
       Proc.new do
         to_let.call
-        to_set = LispMachine.instance_variable_get '@last_evaluated'
-        LispMachine::SYMBOL_TABLE[-1][branch[1].to_sym] = to_set
+        to_set = machine.last_evaluated
+        machine.SYMBOL_TABLE[-1][branch[1].to_sym] = to_set
       end
     end
 
@@ -349,7 +358,7 @@ module LispMachine
 
     def analyze_get(branch)
       Proc.new do
-        set_last_evaluated(LispMachine.lookup(LispMachine::SYMBOL_TABLE.length-1, branch[1]))
+        set_last_evaluated(machine.lookup(machine.SYMBOL_TABLE.length-1, branch[1]))
       end
     end
 
@@ -363,7 +372,7 @@ module LispMachine
       cond  = dispatch branch[1]
       Proc.new do
         cond.call
-        if LispMachine.instance_variable_get('@last_evaluated')
+        if machine.last_evaluated
           left.call
         else
           right.call
@@ -385,12 +394,12 @@ module LispMachine
       Proc.new do
         func = analyzed_func ? begin
           analyzed_func.call
-          LispMachine.instance_variable_get '@last_evaluated'
+          machine.last_evaluated
         end : nil
 
         arguments_to_pass = analyzed_args.map do |a|
           a.call
-          LispMachine.instance_variable_get '@last_evaluated'
+          machine.last_evaluated
         end
 
         func_name = branch[1].kind_of?(String) ? branch[1] : '_'
@@ -400,7 +409,7 @@ module LispMachine
           func: func, 
           args: arguments_to_pass 
         }
-        LispMachine::LanguageHelpers.map_params_for_function arguments_for_function_call
+        machine.map_params_for_function arguments_for_function_call
       end
     end
 
@@ -411,241 +420,234 @@ module LispMachine
     end
   end
 
-  SYMBOL_TABLE = [{ }]
+  @SYMBOL_TABLE = [{ }]
   
   @last_evaluated
 
-  @analyzer = Analyzer.new
+  @analyzer = Analyzer.new self
   
   # Information about tail call optimization
   @tail_call
+
+  attr_accessor :SYMBOL_TABLE
+  attr_accessor :analyzer
+  attr_accessor :last_evaluated
+  attr_accessor :tail_call
+
+  def initialize
+    @SYMBOL_TABLE = [ { } ]
+    @analyzer = Analyzer.new self
+  end
   
   # Helper method to run embedded programs quickly
-  def self.run(prog)
+  def self.run(prog, attrs = nil)
     parsed = Parser.new.parse prog
-    LispMachine::interpret(parsed)
-    LispMachine.instance_variable_get('@last_evaluated')
+    machine = LispMachine.new
+    machine.preload attrs if attrs
+    machine.interpret(parsed)
+    machine.last_evaluated
   end
 
-  def self.preload(attrs)
+  def preload(attrs)
     attrs.each do |k,v|
-      LispMachine::SYMBOL_TABLE[0][k] = v
+      @SYMBOL_TABLE[0][k] = v
     end
   end
   
-  def self.lookup(scope, x)
+  def lookup(scope, x)
     scope.downto(0).each do |level|
-      result = LispMachine::SYMBOL_TABLE[level][x.to_sym]
+      result = @SYMBOL_TABLE[level][x.to_sym]
       return result if result
-      return result if LispMachine::SYMBOL_TABLE[level].has_key? x.to_sym
+      return result if @SYMBOL_TABLE[level].has_key? x.to_sym
     end
     return nil
   end
   
-  def self.push_scope
-    LispMachine::SYMBOL_TABLE << {}
+  def push_scope
+    @SYMBOL_TABLE << {}
   end
   
-  def self.pop_scope
-    LispMachine::SYMBOL_TABLE.pop
+  def pop_scope
+    @SYMBOL_TABLE.pop
   end
-    
-  module LanguageHelpers
-   
-    POSITION_OF_ARG_SIMPLE_0 = 1
-    POSITION_OF_ARG_SIMPLE_1 = 2
+     
+  POSITION_OF_ARG_SIMPLE_0 = 1
+  POSITION_OF_ARG_SIMPLE_1 = 2
 
-    POSITION_OF_ARGS_IN_DEFINITION = 2
-    POSITION_OF_CLOSED_OVER_VARIABLES = 3
+  POSITION_OF_ARGS_IN_DEFINITION = 2
+  POSITION_OF_CLOSED_OVER_VARIABLES = 3
 
-    # Start of args in function call
-    POSITION_OF_COMPLEX_ARGS_START = 2
-    
-    def self.extract_args_from_definition(x)
-      return [x[POSITION_OF_ARGS_IN_DEFINITION]] 
-    end
-
-    def self.process_message branch
-      LispMachine.interpret [branch[1]]
-      message = LispMachine.instance_variable_get '@last_evaluated'
-
-      LispMachine.interpret [branch[2]]
-      receiver = LispMachine.instance_variable_get '@last_evaluated'
-      
-      result = receiver.send message.to_sym
-      LispMachine.instance_variable_set '@last_evaluated', result
-    end
-
-    def self.create_struct_from branch
-      result = OpenStruct.new
-      params = branch.flatten
-      1.upto params.length - 1 do |i|
-        result.send "#{params[i]}=", nil  
-      end
-      result
-    end
-    
-    def self.close_over_variables(branch, target)
-      closed_over = branch[POSITION_OF_CLOSED_OVER_VARIABLES]
-      saved_as = {}
-      if (closed_over)
-        [closed_over].flatten.each do |var|
-          saved_as[var.to_sym] = LispMachine.lookup LispMachine::SYMBOL_TABLE.length-1, var
-        end
-        target[:closed_over] = saved_as
-      end
-    end
-    
-    # Extract simple args for 2-operand operators like +, - etc.
-    def self.extract_simple_args(branch)
-      
-      res = []
-      LispMachine::interpret([branch[POSITION_OF_ARG_SIMPLE_0]])
-      res << LispMachine.instance_variable_get('@last_evaluated')
-      
-      LispMachine::interpret([branch[POSITION_OF_ARG_SIMPLE_1]])
-      res << LispMachine.instance_variable_get('@last_evaluated')
-      
-      return res
-    end
-        
-    # Extract and set up a function call
-    def self.extract_complex_args_func_call(branch)
-      result = {
-        func_name: branch[1]
-      }
-      if (branch.length > POSITION_OF_COMPLEX_ARGS_START) then
-        args = []
-        
-        POSITION_OF_COMPLEX_ARGS_START.upto(branch.length - 1).each do |i|
-          wrapper = [branch[i]]
-          LispMachine.interpret wrapper
-          
-          args << LispMachine.instance_variable_get('@last_evaluated')
-        end
-        result[:args] = args
-      end
-      
-      return result
-    end
-    
-    def self.push_closed_variables_to_scope(closed)
-      if closed
-        closed.each do |k,v|
-          LispMachine::SYMBOL_TABLE[-1][k] = v
-        end
-      end
-    end
-
-    def self.save_closed_variables_from_scope(closed)
-      result = {}
-      if closed
-        closed.each do |k, v|
-          result[k.to_sym] = LispMachine::SYMBOL_TABLE[-1][k.to_sym]
-        end
-      end
-      result
-    end
-    
-    # Set up a symbol table for a function call
-    def self.map_params_for_function(args, cc = false)
-
-
-      #puts "self.map_params_for_function #{args} #{cc}"
-      func_find = nil
-      if args[:func]
-        func_find = args[:func]
-      else
-        func_find = LispMachine::lookup(LispMachine::SYMBOL_TABLE.length - 1, args[:func_name])
-      end
-
-      if func_find.kind_of? Continuation and cc
-        LispMachine.instance_variable_set('@last_evaluated', args[:args][0])
-      end
-
-      if func_find.kind_of? Continuation
-        func_find.call
-        return
-      end
-       
-      if not func_find or func_find[:type] != 'definition'
-        binding.pry
-        throw :no_such_function
-      else
-        
-        # Begin the mapping by creating a new scope
-        LispMachine::push_scope()
-        
-        func_find[:arguments].flatten.each_with_index do |a, i|
-          LispMachine::SYMBOL_TABLE[-1]["#{a}".to_sym] = args[:args][i]
-        end
-
-        LanguageHelpers.push_closed_variables_to_scope(func_find[:closed_over])
-        reclosed = LanguageHelpers.pass_execution_to_function func_find
-
-        if reclosed
-          if args[:func]
-            args[:func][:closed_over] = reclosed
-          else
-            LispMachine::lookup(LispMachine::SYMBOL_TABLE.length - 1, args[:func_name])[:closed_over] = reclosed
-          end
-        end
-
-      end
-    end
-
-    # remap variables without a new function call
-    # (used for tail call optimization)
-    def self.replace_args_for_function(branch, args = extract_complex_args_func_call(LanguageHelpers.tail_call))
-      branch[:arguments].flatten.each_with_index do |a, i|
-        LispMachine::SYMBOL_TABLE[-1]["#{a}".to_sym] = args[:args][i]
-      end
-      LispMachine.instance_variable_set '@tail_call', nil
-    end
-
-    def self.tail_call
-      LispMachine.instance_variable_get '@tail_call'
-    end
-    
-    def self.pass_execution_to_function(branch)
-      # trampoline the function call to support tail call optimization
-      while true
-        if branch[:contents].respond_to? :call
-          branch[:contents].call
-        else
-          LispMachine.interpret(branch[:contents])
-        end
-        if LanguageHelpers.tail_call and LanguageHelpers.tail_call[1].to_s == branch[:name].to_s
-          LanguageHelpers.replace_args_for_function branch
-        else
-          break
-        end
-      end
-      
-      # Gather new closed values
-      reclosed = LanguageHelpers.save_closed_variables_from_scope branch[:closed_over]
-      
-      LispMachine::pop_scope()
-
-      return reclosed
-    end
-
-    def self.check_for_struct struct, v
-      if not struct.kind_of? OpenStruct
-        throw :not_a_struct
-      end
-
-      has_entry = struct.marshal_dump.has_key? v.to_sym
-
-      if not has_entry
-        throw "no_such_value_#{v}".to_sym
-      end
-
-    end
-    
+  # Start of args in function call
+  POSITION_OF_COMPLEX_ARGS_START = 2
+  
+  def extract_args_from_definition(x)
+    return [x[POSITION_OF_ARGS_IN_DEFINITION]] 
   end
 
-  def self.interpret(tree)
+  def create_struct_from branch
+    result = OpenStruct.new
+    params = branch.flatten
+    1.upto params.length - 1 do |i|
+      result.send "#{params[i]}=", nil  
+    end
+    result
+  end
+  
+  def close_over_variables(branch, target)
+    closed_over = branch[POSITION_OF_CLOSED_OVER_VARIABLES]
+    saved_as = {}
+    if (closed_over)
+      [closed_over].flatten.each do |var|
+        saved_as[var.to_sym] = lookup @SYMBOL_TABLE.length-1, var
+      end
+      target[:closed_over] = saved_as
+    end
+  end
+  
+  # Extract simple args for 2-operand operators like +, - etc.
+  def extract_simple_args(branch)
+    
+    res = []
+    interpret([branch[POSITION_OF_ARG_SIMPLE_0]])
+    res << @last_evaluated
+
+    interpret([branch[POSITION_OF_ARG_SIMPLE_1]])
+    res << last_evaluated
+
+    return res
+  end
+      
+  # Extract and set up a function call
+  def extract_complex_args_func_call(branch)
+    result = {
+      func_name: branch[1]
+    }
+    if (branch.length > POSITION_OF_COMPLEX_ARGS_START) then
+      args = []
+      
+      POSITION_OF_COMPLEX_ARGS_START.upto(branch.length - 1).each do |i|
+        wrapper = [branch[i]]
+        interpret wrapper
+        
+        args << last_evaluated
+      end
+      result[:args] = args
+    end
+    
+    return result
+  end
+  
+  def push_closed_variables_to_scope(closed)
+    if closed
+      closed.each do |k,v|
+        @SYMBOL_TABLE[-1][k] = v
+      end
+    end
+  end
+
+  def save_closed_variables_from_scope(closed)
+    result = {}
+    if closed
+      closed.each do |k, v|
+        result[k.to_sym] = @SYMBOL_TABLE[-1][k.to_sym]
+      end
+    end
+    result
+  end
+  
+  # Set up a symbol table for a function call
+  def map_params_for_function(args, cc = false)
+
+
+    func_find = nil
+    if args[:func]
+      func_find = args[:func]
+    else
+      func_find = lookup(@SYMBOL_TABLE.length - 1, args[:func_name])
+    end
+
+    if func_find.kind_of? Continuation and cc
+      @last_evaluated = args[:args][0]
+    end
+
+    if func_find.kind_of? Continuation
+      func_find.call
+      return
+    end
+     
+    if not func_find or func_find[:type] != 'definition'
+      binding.pry
+      throw :no_such_function
+    else
+      
+      # Begin the mapping by creating a new scope
+      push_scope()
+      
+      func_find[:arguments].flatten.each_with_index do |a, i|
+        @SYMBOL_TABLE[-1]["#{a}".to_sym] = args[:args][i]
+      end
+
+      push_closed_variables_to_scope(func_find[:closed_over])
+      reclosed = pass_execution_to_function func_find
+
+      if reclosed
+        if args[:func]
+          args[:func][:closed_over] = reclosed
+        else
+          lookup(@SYMBOL_TABLE.length - 1, args[:func_name])[:closed_over] = reclosed
+        end
+      end
+
+    end
+  end
+
+  # remap variables without a new function call
+  # (used for tail call optimization)
+  def replace_args_for_function(branch, args = extract_complex_args_func_call(tail_call))
+    branch[:arguments].flatten.each_with_index do |a, i|
+      @SYMBOL_TABLE[-1]["#{a}".to_sym] = args[:args][i]
+    end
+    @tail_call = nil
+  end
+
+  def pass_execution_to_function(branch)
+    # trampoline the function call to support tail call optimization
+    while true
+      if branch[:contents].respond_to? :call
+        branch[:contents].call
+      else
+        interpret(branch[:contents])
+      end
+      if @tail_call and @tail_call[1].to_s == branch[:name].to_s
+        replace_args_for_function branch
+      else
+        break
+      end
+    end
+    
+    # Gather new closed values
+    reclosed = save_closed_variables_from_scope branch[:closed_over]
+    
+    pop_scope()
+
+    return reclosed
+  end
+
+  def check_for_struct struct, v
+    if not struct.kind_of? OpenStruct
+      throw :not_a_struct
+    end
+
+    has_entry = struct.marshal_dump.has_key? v.to_sym
+
+    if not has_entry
+      throw "no_such_value_#{v}".to_sym
+    end
+
+  end
+    
+
+  def interpret(tree)
     
     return unless tree    
     
@@ -661,12 +663,10 @@ module LispMachine
       return @last_evaluated
     end
     
-    return unless branch
-
     analyzed = @analyzer.dispatch branch
 
     analyzed.call if analyzed.respond_to? :call
    
-    LispMachine.interpret(tree[1])
+    interpret(tree[1])
   end
 end
