@@ -29,10 +29,6 @@ class LispMachine
       @machine = machine
     end
 
-    def machine
-      @machine
-    end
-
     def to_ruby_operator op
       op == '=' ? '==' : op
     end
