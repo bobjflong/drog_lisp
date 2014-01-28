@@ -187,7 +187,7 @@ describe "basic arithmetic" do
 end
 
 describe "test recursion" do
-  it "returns the factorial of the number 10" do
+  it "can use the typical recursive definition to calculate factorial" do
     
     number = 10
     assert_equal (LispMachine.run """

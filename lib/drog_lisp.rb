@@ -550,26 +550,30 @@ class LispMachine
     end
     result
   end
-  
-  # Set up a symbol table for a function call
-  def map_params_for_function(args, cc = false)
 
+  def find_function_from_arguments args
+    return args[:func] if args[:func]
+    lookup(@SYMBOL_TABLE.length - 1, args[:func_name])
+  end
 
-    func_find = nil
-    if args[:func]
-      func_find = args[:func]
-    else
-      func_find = lookup(@SYMBOL_TABLE.length - 1, args[:func_name])
-    end
-
+  def find_and_handle_continuation_function args, func_find, cc
     if func_find.kind_of? Continuation and cc
       @last_evaluated = args[:args][0]
     end
 
     if func_find.kind_of? Continuation
       func_find.call
-      return
+      return func_find
     end
+    nil
+  end
+  
+  # Set up a symbol table for a function call
+  def map_params_for_function(args, cc = false)
+
+    func_find = find_function_from_arguments args
+
+    return if find_and_handle_continuation_function args, func_find, cc
      
     if not func_find or func_find[:type] != 'definition'
       binding.pry
