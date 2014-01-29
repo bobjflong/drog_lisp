@@ -281,32 +281,31 @@ describe "function application" do
     """)
   end
 
+=begin
+(define Y
+  (lambda (f)
+      ((lambda (x) (x x))
+           (lambda (g)
+                  (f (lambda args (apply (g g) args)))))))
+=end
   it "allows the ycombinator to be written" do
     assert_equal 720, (LispMachine.run """
       (Do
-        (Func y generator)
+        
+        (Func y f)
           (Do
-            
             (Call
-              (Func _ x ~(generator))
+              (Func _ x)
+                (Do (Call x x))
+
+              (Func _ g ~(f))
                 (Do
-                  (Func _ args_one ~(x generator))
-                    (Do
-                      (Apply
-                        (Call generator (Call x x))
-                        args_one
+                  (Call f
+                    (Func _ args ~(g))
+                      (Do
+                        (Apply (Call g g) args)
                       )
-                    )
-                ) 
-              (Func _ x ~(generator))
-                (Do
-                  (Func _ args_two ~(x generator))
-                    (Do
-                      (Apply
-                        (Call generator (Call x x))
-                        args_two
-                      )
-                    )
+                  )
                 )
             )
           )
