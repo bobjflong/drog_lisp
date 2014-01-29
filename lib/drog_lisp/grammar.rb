@@ -8,6 +8,7 @@ module Tokens
   DEFINE = "def"
   SET = "set"
   CALL = "call"
+  APPLY= "apply"
   STRUCT = "struct"
   GET = "get"
   SHOW = "show"
@@ -88,6 +89,7 @@ class Parser < Whittle::Parser
   #call a func with a list of args
   rule(:reccall => /RecCall/).as { |c| c }
   rule(:call => /Call/).as { |c| c }
+  rule(:apply => /Apply/).as { |a| a }
   rule(:struct => /Struct/).as { |s| s }
   rule(:quote => /\:[A-Za-z\+\-\\\*\~]+/).as { |q| q }
   rule(:send => /Send/).as { |s| s }
@@ -177,6 +179,10 @@ class Parser < Whittle::Parser
     r["(", :call, :inner_expr, :argument_list, ")"].as do |_,_,n,a|
       result = [Tokens::CALL, n]
       GrammarHelpers::gather_arguments result, a 
+    end
+
+    r["(", :apply, :inner_expr, :deducted_value, ")"].as do |_,_,n,a|
+      [Tokens::APPLY, n, a]
     end
 
     r["(", :reccall, :name, :argument_list, ")"].as do |_,_,n,a|

@@ -267,6 +267,66 @@ describe "first class functions" do
   end
 end
 
+describe "function application" do
+  it "exposes an 'Apply' function" do
+    assert_equal 42, (LispMachine.run """
+      (Do
+        (Apply
+          (Func _ x y)
+            (Do (+ x y))
+         
+         (Cons 40 2)
+        )
+      )
+    """)
+  end
+
+  it "allows the ycombinator to be written" do
+    assert_equal 720, (LispMachine.run """
+      (Do
+        (Func y generator)
+          (Do
+            
+            (Call
+              (Func _ x ~(generator))
+                (Do
+                  (Func _ args_one ~(x generator))
+                    (Do
+                      (Apply
+                        (Call generator (Call x x))
+                        args_one
+                      )
+                    )
+                ) 
+              (Func _ x ~(generator))
+                (Do
+                  (Func _ args_two ~(x generator))
+                    (Do
+                      (Apply
+                        (Call generator (Call x x))
+                        args_two
+                      )
+                    )
+                )
+            )
+          )
+
+        (Func factorial f)
+          (Do
+            (Func fact-inner n ~(f))
+              (Do
+                (If (< n 2)
+                  1
+                  (* n (Call f (- n 1)))
+                )
+              )
+          )
+        (Call (Call y factorial) 6)
+      )
+    """)
+  end
+end
+
 describe "closures" do
   it "closes over variables in scope" do
 

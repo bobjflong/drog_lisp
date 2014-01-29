@@ -74,6 +74,28 @@ class LispMachine
     def set_last_evaluated ans
       machine.last_evaluated = ans
     end
+    
+    def analyze_apply(branch)
+      func_eval = dispatch branch[1]
+      args_eval = dispatch branch[2]
+
+      Proc.new do
+        func_eval.call
+        func = machine.last_evaluated
+
+        args_eval.call
+        args = machine.last_evaluated
+
+        args = [args] unless args.kind_of? Array
+        
+        arguments_for_function_call = {
+          func_name: '_',
+          func: func,
+          args: args
+        }
+        machine.map_params_for_function arguments_for_function_call
+      end
+    end
 
     def analyze_loopuntil(branch)
       pred_eval = dispatch branch[1]
@@ -579,17 +601,16 @@ class LispMachine
       binding.pry
       throw :no_such_function
     else
-      
+
       # Begin the mapping by creating a new scope
       push_scope()
       
       func_find[:arguments].flatten.each_with_index do |a, i|
         @SYMBOL_TABLE[-1]["#{a}".to_sym] = args[:args][i]
       end
-
       push_closed_variables_to_scope(func_find[:closed_over])
       reclosed = pass_execution_to_function func_find
-
+      
       if reclosed
         if args[:func]
           args[:func][:closed_over] = reclosed
