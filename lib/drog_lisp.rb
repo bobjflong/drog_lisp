@@ -88,12 +88,9 @@ class LispMachine
 
         args = [args] unless args.kind_of? Array
         
-        arguments_for_function_call = {
-          func_name: '_',
-          func: func,
-          args: args
-        }
-        machine.map_params_for_function arguments_for_function_call
+        machine.map_params_for_function(
+          create_args_for_function_call(function: func, arguments: args)
+        )
       end
     end
 
@@ -422,16 +419,21 @@ class LispMachine
 
         func_name = branch[1].kind_of?(String) ? branch[1] : '_'
         
-        arguments_for_function_call = {
-          func_name: func_name,
-          func: func, 
-          args: arguments_to_pass 
-        }
-        machine.map_params_for_function arguments_for_function_call
+        machine.map_params_for_function(
+          create_args_for_function_call(name: func_name, function:func, arguments:arguments_to_pass)
+        )
       end
     end
 
     private
+
+    def create_args_for_function_call name: '_', function: function, arguments: args_to_pass
+      {
+        func_name: name,
+        func: function,
+        args: arguments
+      }
+    end
 
     def match_struct_name n
       n.match(/[^\-]+$/)[0]
