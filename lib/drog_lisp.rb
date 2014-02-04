@@ -642,7 +642,11 @@ class LispMachine
         interpret(branch[:contents])
       end
       if @tail_call and @tail_call[1].to_s == branch[:name].to_s
-        replace_args_for_function branch
+        #TODO: REFACTOR + ERROR HANDLING
+        new_function = lookup @SYMBOL_TABLE.length-1, @tail_call[1].to_s
+        replace_args_for_function new_function
+        branch = new_function
+        @last_evaluated = branch
       else
         break
       end
