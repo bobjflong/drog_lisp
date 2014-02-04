@@ -676,20 +676,28 @@ class LispMachine
     
     branch = tree[0]
     
-    if branch.nil? 
-      @last_evaluated = nil
-      return @last_evaluated
-    end
+    return @last_evaluated = nil if branch_is_nil? branch
     
-    if branch.length == 1
-      @last_evaluated = branch[0]
-      return @last_evaluated
-    end
+    return @last_evaluated = branch[0] if branch_is_single_item? branch
     
-    analyzed = @analyzer.dispatch branch
-
-    analyzed.call if analyzed.respond_to? :call
+    analyze_and_call branch
    
     interpret(tree[1])
   end
+
+  private
+
+  def branch_is_nil? branch
+    branch.nil?
+  end
+
+  def branch_is_single_item? branch
+    branch.length == 1
+  end
+
+  def analyze_and_call branch
+    analyzed = @analyzer.dispatch branch
+    analyzed.call if analyzed.respond_to? :call
+  end
+
 end
