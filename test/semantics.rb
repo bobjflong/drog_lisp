@@ -160,6 +160,27 @@ describe "tail optimization" do
       """
     end
   end
+
+  it "can switch between functions in a tail call" do
+    assert_output "1\n2\n" do
+      LispMachine.run """
+      (Do
+        (Func two void)
+          (Do
+            (Show 2)
+          )
+
+        (Func one void)
+          (Do
+            (Show 1)
+            (RecCall two void)
+          )
+
+        (Call one void)
+      )
+      """
+    end
+  end
 end
 
 describe "basic arithmetic" do
