@@ -27,6 +27,8 @@ Gem::Specification.new do |s|
 
   s.add_runtime_dependency 'whittle'
   s.add_runtime_dependency 'sxp'
+  s.add_runtime_dependency 'pry'
+
 
   # For C extensions
   # s.extensions = "ext/extconf.rb"
