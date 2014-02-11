@@ -150,7 +150,7 @@ describe "tail optimization" do
       (Do
         (Func loop x)
           (Do
-            (If (= x 10000)
+            (If (= x 100000)
               (Show \"done\")
               (RecCall loop (+ x 1))
             )

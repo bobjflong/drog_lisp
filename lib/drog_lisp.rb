@@ -5,6 +5,23 @@ require 'continuation'
 require 'pry'
 
 class LispMachine
+
+
+  attr_accessor :SYMBOL_TABLE
+  attr_accessor :analyzer
+  attr_accessor :last_evaluated
+  attr_accessor :tail_call
+
+  def initialize
+    @analyzer = Analyzer.new self
+    
+    @SYMBOL_TABLE = [{ }]
+    @last_evaluated
+
+    # Information about tail call optimization
+    @tail_call
+  end
+  
   
   class Analyzer
 
@@ -57,7 +74,6 @@ class LispMachine
       elsif @replace_ops_dictionary.has_key? op
         @replace_ops_dictionary[op]
       else
-        @analyzer = Analyzer.new self
         op
       end
     end
@@ -440,25 +456,6 @@ class LispMachine
     end
   end
 
-  @SYMBOL_TABLE = [{ }]
-  
-  @last_evaluated
-
-  @analyzer = Analyzer.new self
-  
-  # Information about tail call optimization
-  @tail_call
-
-  attr_accessor :SYMBOL_TABLE
-  attr_accessor :analyzer
-  attr_accessor :last_evaluated
-  attr_accessor :tail_call
-
-  def initialize
-    @SYMBOL_TABLE = [ { } ]
-    @analyzer = Analyzer.new self
-  end
-  
   # Helper method to run embedded programs quickly
   def self.run(prog, attrs = nil)
     parsed = Parser.new.parse prog
