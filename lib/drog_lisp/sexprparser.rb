@@ -2,21 +2,6 @@
 require 'thread'
 require 'sxp'
 
-class Array
-  def to_cons
-    res = ""
-    self.each do |v|
-      if v.kind_of? Array
-        res += "(Cons #{v.to_cons}"
-      else
-        res += "(Cons #{v.to_sxp}"
-      end
-    end
-    res += " null "
-    res += (")" * self.length)
-  end
-end
-
 class LispMacro
  
   attr_reader :name
@@ -190,3 +175,22 @@ end
 
 class Position < Struct.new(:start, :end)
 end
+
+# Add to_cons to the array class,
+# Makes metaprogramming a breeze
+class Array
+  def to_cons
+    res = ""
+    self.each do |v|
+      if v.kind_of? Array
+        res += "(Cons #{v.to_cons}"
+      else
+        res += "(Cons #{v.to_sxp}"
+      end
+    end
+    res += " null "
+    res += (")" * self.length)
+  end
+end
+
+

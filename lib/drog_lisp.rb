@@ -136,43 +136,29 @@ class LispMachine
 
     def wrap_unless_cmpd branch
       return [] unless branch
-      if is_cmpd(branch)
-        branch
-      else
-        [branch]
-      end
+      return branch if is_cmpd(branch)
+      [branch]
     end
-
+    
+    #Special case with keyword :Do
+    #:Do -cons with-
+    #[:+, :x, :y]
+    # => [:Do, [:+, :x, :y]]
+    # ie. Should not be merged into one list
+    # makes writing drog programs in drog a little easier
     def analyze_cons(branch)
       left_eval = dispatch branch[1]
       right_eval = dispatch branch[2]
+      
       Proc.new do
-        left_eval.call
-        left = machine.last_evaluated
 
-        right_eval.call
-
-        right = machine.last_evaluated
+        left, right = call_and_retrieve_last_evaluated left_eval, right_eval
         
         if not right
           set_last_evaluated left
         else
-
-  
-          #Special case with keyword :Do
-          #:Do -cons with-
-          #[:+, :x, :y]
-          # => [:Do, [:+, :x, :y]]
-          # ie. Should not be merged into one list
-
           if left == :Do
-
-            if is_not_cmpd right
-             set_last_evaluated [left, right] 
-            else
-              set_last_evaluated [left, right].flatten 1
-            end
-          
+            merge_do_keyword_with_list left, right 
           else
             if left.kind_of? Array
               set_last_evaluated [left] + wrap_unless_cmpd(right)
@@ -449,6 +435,25 @@ class LispMachine
         func: function,
         args: arguments
       }
+    end
+
+    def merge_do_keyword_with_list left, right
+      if is_not_cmpd right
+       set_last_evaluated [left, right] 
+      else
+        set_last_evaluated [left, right].flatten 1
+      end
+    end
+
+    def call_and_retrieve_last_evaluated *to_eval
+
+      evaled = to_eval.map do |x|
+        x.call
+        machine.last_evaluated
+      end
+
+      return evaled.first if evaled.length == 1
+      evaled
     end
 
     def match_struct_name n
