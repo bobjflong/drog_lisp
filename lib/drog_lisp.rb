@@ -201,11 +201,7 @@ class LispMachine
       receiver_eval = dispatch branch[2]
 
       Proc.new do
-        send_eval.call
-        message = machine.last_evaluated
-
-        receiver_eval.call
-        receiver = machine.last_evaluated
+        message, receiver = call_and_retrieve_last_evaluated send_eval, receiver_eval
         
         #Map symbol receivers to real equivalents
         # eg :Time => Time
@@ -215,9 +211,10 @@ class LispMachine
         if not message.kind_of? Array
           set_last_evaluated receiver.send message
         else
+          # If the arguments are an array, don't splat them in
           if message.length == 2 and message[1].kind_of? Array
             set_last_evaluated receiver.send(message[0], message.drop(1))
-          else  
+          else 
             set_last_evaluated receiver.send(message[0], *message.drop(1))
           end
         end
@@ -308,11 +305,7 @@ class LispMachine
       val_eval    = dispatch(branch[3])
       value_to_set = match_struct_name(branch[1])
       Proc.new do
-        struct_eval.call
-        struct = machine.last_evaluated
-
-        val_eval.call
-        val = machine.last_evaluated
+        struct, val = call_and_retrieve_last_evaluated struct_eval, val_eval
         
         machine.check_for_struct struct, value_to_set
 
@@ -324,8 +317,7 @@ class LispMachine
       struct_eval = dispatch branch[2]
       value_to_get = match_struct_name(branch[1])
       Proc.new do
-        struct_eval.call
-        struct = machine.last_evaluated
+        struct = call_and_retrieve_last_evaluated struct_eval
         
         machine.check_for_struct struct, value_to_get
         set_last_evaluated(struct.send value_to_get)
@@ -344,7 +336,6 @@ class LispMachine
             
       machine.SYMBOL_TABLE[-1][name.to_sym] = result
       machine.close_over_variables branch, result
-
 
       Proc.new do
         to_return = result.clone
@@ -400,7 +391,7 @@ class LispMachine
 
     def analyze_call branch
       #map the arguments to lambdas that will give us the argument
-      analyzed_args = branch[2..-1].map do |a|
+      analyzed_args = branch.drop(2).map do |a|
         dispatch a
       end
 
@@ -409,15 +400,9 @@ class LispMachine
       analyzed_func = dispatch(branch[1]) unless branch[1].kind_of?(String)
 
       Proc.new do
-        func = analyzed_func ? begin
-          analyzed_func.call
-          machine.last_evaluated
-        end : nil
+        func = call_and_retrieve_last_evaluated analyzed_func
 
-        arguments_to_pass = analyzed_args.map do |a|
-          a.call
-          machine.last_evaluated
-        end
+        arguments_to_pass = analyzed_args.map { |a| call_and_retrieve_last_evaluated a } 
 
         func_name = branch[1].kind_of?(String) ? branch[1] : '_'
         
@@ -446,6 +431,9 @@ class LispMachine
     end
 
     def call_and_retrieve_last_evaluated *to_eval
+      
+      return nil unless to_eval and to_eval.length > 0
+      return nil if to_eval.all? { |x| x.nil? }
 
       evaled = to_eval.map do |x|
         x.call
@@ -494,7 +482,7 @@ class LispMachine
   end
 
   def replace_scope
-    pop_scope && push_scope
+    pop_scope ; push_scope
   end
      
   POSITION_OF_ARG_SIMPLE_0 = 1
@@ -638,6 +626,7 @@ class LispMachine
       @SYMBOL_TABLE[-1]["#{a}".to_sym] = args[:args][i]
     end
     @tail_call = nil
+    branch
   end
 
   def pass_execution_to_function(branch)
@@ -666,8 +655,8 @@ class LispMachine
 
   def swap_current_function branch
     new_function = lookup @SYMBOL_TABLE.length-1, branch[1].to_s
+    new_function = find_function_from_arguments func_name: branch[1].to_s
     replace_args_for_function new_function
-    new_function
   end
 
   def check_for_struct struct, v
