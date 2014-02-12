@@ -96,11 +96,7 @@ class LispMachine
       args_eval = dispatch branch[2]
 
       Proc.new do
-        func_eval.call
-        func = machine.last_evaluated
-
-        args_eval.call
-        args = machine.last_evaluated
+        func, args = call_and_retrieve_last_evaluated func_eval, args_eval
 
         args = [args] unless args.kind_of? Array
         
@@ -175,8 +171,7 @@ class LispMachine
       show_eval = dispatch branch[1]
       
       Proc.new do
-        show_eval.call
-        last_evaluated = machine.last_evaluated
+        last_evaluated = call_and_retrieve_last_evaluated show_eval
         if last_evaluated.kind_of? Array and last_evaluated.length > 1
           if last_evaluated[0] == 'const'
             print last_evaluated[1]
@@ -228,9 +223,7 @@ class LispMachine
       eval_eval = dispatch branch[1]
       
       Proc.new do
-        eval_eval.call
-
-        program = machine.last_evaluated
+        program = call_and_retrieve_last_evaluated eval_eval
         sexp = nil
 
         if not program[0] == :Do
@@ -260,8 +253,7 @@ class LispMachine
       list_eval = dispatch branch[1]
       Proc.new do
         begin
-        list_eval.call
-        set_last_evaluated machine.last_evaluated[0]
+        set_last_evaluated call_and_retrieve_last_evaluated(list_eval)[0]
         rescue
           binding.pry
         end
@@ -271,8 +263,7 @@ class LispMachine
     def analyze_cdr(branch)
       list_eval = dispatch branch[1]
       Proc.new do
-        list_eval.call
-        result = machine.last_evaluated.drop 1
+        result = call_and_retrieve_last_evaluated(list_eval).drop 1
         if result.empty?
           set_last_evaluated nil
         else
