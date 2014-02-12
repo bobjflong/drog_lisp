@@ -492,6 +492,10 @@ class LispMachine
   def pop_scope
     @SYMBOL_TABLE.pop
   end
+
+  def replace_scope
+    pop_scope && push_scope
+  end
      
   POSITION_OF_ARG_SIMPLE_0 = 1
   POSITION_OF_ARG_SIMPLE_1 = 2
@@ -629,6 +633,7 @@ class LispMachine
   # remap variables without a new function call
   # (used for tail call optimization)
   def replace_args_for_function(branch, args = extract_complex_args_func_call(tail_call))
+    replace_scope
     branch[:arguments].flatten.each_with_index do |a, i|
       @SYMBOL_TABLE[-1]["#{a}".to_sym] = args[:args][i]
     end
@@ -645,10 +650,7 @@ class LispMachine
       end
       if @tail_call
         #TODO: REFACTOR + ERROR HANDLING
-        new_function = lookup @SYMBOL_TABLE.length-1, @tail_call[1].to_s
-        replace_args_for_function new_function
-        branch = new_function
-        @last_evaluated = branch
+        @last_evaluated = branch = swap_current_function @tail_call
       else
         break
       end
@@ -660,6 +662,12 @@ class LispMachine
     pop_scope()
 
     return reclosed
+  end
+
+  def swap_current_function branch
+    new_function = lookup @SYMBOL_TABLE.length-1, branch[1].to_s
+    replace_args_for_function new_function
+    new_function
   end
 
   def check_for_struct struct, v
