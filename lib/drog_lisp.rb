@@ -58,11 +58,7 @@ class LispMachine
         operand_1_eval = dispatch branch[1]
         operand_2_eval = dispatch branch[2]
         Proc.new do
-
-          operand_1_eval.call
-          operand_1 = machine.last_evaluated
-          operand_2_eval.call
-          operand_2 = machine.last_evaluated
+          operand_1, operand_2 = call_and_retrieve_last_evaluated operand_1_eval, operand_2_eval
           set_last_evaluated(operand_1.send(to_ruby_operator(op).to_sym, operand_2))
         end
       end
