@@ -6,7 +6,6 @@ require 'pry'
 
 class LispMachine
 
-
   attr_accessor :SYMBOL_TABLE
   attr_accessor :analyzer
   attr_accessor :last_evaluated
@@ -338,11 +337,24 @@ class LispMachine
       end
     end
 
+    def analyze_reset(branch)
+      to_set_analyze = dispatch branch[2]
+      Proc.new do
+        to_set = call_and_retrieve_last_evaluated to_set_analyze
+        key = branch[1].to_sym
+        machine.SYMBOL_TABLE.reverse.each do |level|
+          if level.has_key? key
+            level[key] = to_set
+            break
+          end
+        end
+      end
+    end
+
     def analyze_let(branch)
       to_let = dispatch branch[2]
       Proc.new do
-        to_let.call
-        to_set = machine.last_evaluated
+        to_set = call_and_retrieve_last_evaluated to_let
         machine.SYMBOL_TABLE[-1][branch[1].to_sym] = to_set
       end
     end

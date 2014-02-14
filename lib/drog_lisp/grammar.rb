@@ -24,6 +24,7 @@ module Tokens
   CAR = "car"
   CDR = "cdr"
   LET = "let"
+  RESET = "reset"
   GETS = "gets"
   CallCC = "callcc"
   QUOTE = "quote"
@@ -94,6 +95,7 @@ class Parser < Whittle::Parser
   rule(:quote => /\:[A-Za-z\+\-\\\*\~]+/).as { |q| q }
   rule(:send => /Send/).as { |s| s }
   rule(:let => /Let/).as { |l| l }
+  rule(:reset => /Reset/).as { |s| s }
   rule(:if => /If/).as { |i| i }
   rule(:show => /Show/).as { |s| s }
   rule(:name => /[a-zA-Z\-\_\?]+/).as { |n| n }
@@ -130,6 +132,10 @@ class Parser < Whittle::Parser
  
     r["(", :let, :name, :deducted_value, ")"].as do |_,_,n,v,_|
       [ Tokens::LET, n, v ]
+    end
+
+    r["(", :reset, :name, :deducted_value, ")"].as do |_,_,n,v,_|
+      [ Tokens::RESET, n, v]
     end
 
     r["(", :loopuntil, :deducted_value, :expr, ")"].as do |_,_,v,e|

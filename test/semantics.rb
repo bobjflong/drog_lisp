@@ -302,13 +302,6 @@ describe "function application" do
     """)
   end
 
-=begin
-(define Y
-  (lambda (f)
-      ((lambda (x) (x x))
-           (lambda (g)
-                  (f (lambda args (apply (g g) args)))))))
-=end
   it "allows the ycombinator to be written" do
     assert_equal 720, (LispMachine.run """
       (Do
@@ -543,6 +536,22 @@ describe "preloading objects" do
       """, { mydog: jim }
     end
 
+  end
+end
+
+describe "mutable variables" do
+  it "allows symbol table entries to be overwritten" do
+    assert_equal (LispMachine.run """
+      (Do
+        (Let x 5)
+
+        (Func overwrite void)
+          (Do (Reset x 6) )
+
+        (Call overwrite void)
+        (x)
+      )
+    """), 6
   end
 end
 
