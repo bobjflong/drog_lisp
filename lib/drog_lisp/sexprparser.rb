@@ -96,8 +96,10 @@ class SexprParser
   attr_reader :positions
 
   def initialize text
-    @text = text.split ''
     @raw = text
+    delete_comments!
+
+    @text = @raw.split ''
     @parsed = []
     @positions = []
   end
@@ -125,7 +127,7 @@ class SexprParser
       if next_val == '"'
         in_string = in_string ? false : true
       end
-      
+
       if next_val == ')' and not in_string
 
         count -= 1
@@ -160,7 +162,7 @@ class SexprParser
   def find_sexprs
     threads = []
     in_string = false
-    
+
     @text.each_with_index do |v, i|
       if v == '"'
         in_string = in_string ? false : true
@@ -170,6 +172,12 @@ class SexprParser
       end
     end
     threads.each { |t| t.join }
+  end
+
+  private
+
+  def delete_comments!
+    @raw.gsub! /\;[^\n]*$/, ''
   end
 end
 
