@@ -220,37 +220,50 @@ LispMachine.run """
 drog\_lisp includes an optional preprocessor that lets you design your own syntactic constructs. In this example I produce a scheme-like "let", which shifts and binds values into scope for a block. See a similar example at http://en.wikipedia.org/wiki/Scheme_(programming_language)#Minimalism. Note that this example is different to the primitive Let function in drog_lisp (which explictly writes a variable to the symbol table).
 
 ```ruby
+require 'drog_lisp'
 require 'drog_lisp/sexprparser'
+require 'drog_lisp/matcher'
+require 'sxp'
 
-letin = LispMacro.new 'letin' do |ast|
-
-  body = ast[-1].to_sxp
-
-  func_params = ''
-  func_args   = ''
-
-  ast[1..-2].each do |param|
-    func_params += "#{param[0].to_sxp} "
-    func_args += "#{param[1].to_sxp} "
+having = LispMacro.new 'having' do |ast|
+  
+  ast.drog_pattern 'having:variables:body' do |vars|
+    
+    #Grab entries from AST pattern
+    having, variables, body = vars[:having], vars[:variables], 
+      vars[:body]
+    
+    #Extract the binding names
+    names = variables.map { |v| v[0] }
+    #Extract the values
+    values = variables.map { |v| v[1] }
+    #Construct the anonymous function prototype
+    prototype = [:Func, :_] + names
+    (
+      [
+        :Call,
+        prototype,
+        [
+          :Do,
+          body
+        ],
+      ] + values
+    ).to_sxp
   end
-
-  %Q(
-    (Func tmp #{func_params})
-      #{body}
-
-    (Call tmp #{func_args})
-  )
 end
 
 prog = %Q(
   (Do
-    (letin (a 1) (b 2) (Do (Show (+ a b))))
+    (having ((x 1) (y 2))
+      (+ x y)
+    )
   )
 )
 
+LispPreprocessor.preprocess prog, MacroList.new([having])
 
-LispPreprocessor.preprocess prog, MacroList.new([letin])
-LispMachine.run prog
+LispMachine.run(prog)
+    
 
 #=> 3
 
