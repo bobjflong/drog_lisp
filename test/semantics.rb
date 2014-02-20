@@ -181,6 +181,22 @@ describe "tail optimization" do
       """
     end
   end
+
+  it "supports function literals in tail calls" do
+    assert_output "1\n2\n" do
+      LispMachine.run """
+      (Do
+        (Func one void)
+          (Do
+            (Show 1)
+            (RecCall (Func _ void) (Do (Show 2)) void)
+          )
+
+        (Call one void)
+      )
+      """
+    end
+  end
 end
 
 describe "basic arithmetic" do

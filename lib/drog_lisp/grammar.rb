@@ -196,6 +196,11 @@ class Parser < Whittle::Parser
       GrammarHelpers::gather_arguments result, a 
     end
 
+    r["(", :reccall, :inner_expr, :argument_list, ")"].as do |_,_,n,a|
+      result = [Tokens::RECCALL, n]
+      GrammarHelpers::gather_arguments result, a 
+    end
+
     r["(", :callcc, :name, ")"].as do |_,_,v|
       [ Tokens::CallCC, v ]
     end

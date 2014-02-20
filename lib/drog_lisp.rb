@@ -181,7 +181,14 @@ class LispMachine
     end
 
     def analyze_reccall(branch)
+      
+      analyzed_func = nil
+      analyzed_func = dispatch(branch[1]) unless branch[1].kind_of?(String)
+
       Proc.new do
+        if analyzed_func
+          branch[1] = call_and_retrieve_last_evaluated analyzed_func
+        end
         machine.tail_call = branch
       end
     end
@@ -653,8 +660,7 @@ class LispMachine
   end
 
   def swap_current_function branch
-    new_function = lookup @SYMBOL_TABLE.length-1, branch[1].to_s
-    new_function = find_function_from_arguments func_name: branch[1].to_s
+    new_function = find_function_from_arguments produce_function_arguments_for_tail_call(branch)
     replace_args_for_function new_function
   end
 
@@ -701,5 +707,10 @@ class LispMachine
     analyzed = @analyzer.dispatch branch
     analyzed.call if analyzed.respond_to? :call
   end
-
+  
+  def produce_function_arguments_for_tail_call branch
+    func = branch[1].kind_of?(String) ? nil : branch[1]
+    func_name = func ? '_' : branch[1]
+    { func: func, func_name: func_name }
+  end
 end
