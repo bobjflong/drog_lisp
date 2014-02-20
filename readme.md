@@ -324,4 +324,13 @@ len = LispMachine.run """
 # len = 5
 ```
 
+```ruby
+(Do
+  (Let time (Send :new :Time))
+  (Send :class time)
+)
+
+# => Time
+```
+
 
