@@ -10,6 +10,7 @@ class LispMachine
   attr_accessor :analyzer
   attr_accessor :last_evaluated
   attr_accessor :tail_call
+  attr_accessor :tail_call_arguments
 
   def initialize
     @analyzer = Analyzer.new self
@@ -19,6 +20,7 @@ class LispMachine
 
     # Information about tail call optimization
     @tail_call
+    @tail_call_arguments
   end
   
   
@@ -182,14 +184,22 @@ class LispMachine
 
     def analyze_reccall(branch)
       
+      analyzed_args = branch.drop(2).map do |a|
+        dispatch a
+      end
+
       analyzed_func = nil
       analyzed_func = dispatch(branch[1]) unless branch[1].kind_of?(String)
 
       Proc.new do
+
+        arguments_to_pass = analyzed_args.map { |a| call_and_retrieve_last_evaluated a } 
+        
         if analyzed_func
           branch[1] = call_and_retrieve_last_evaluated analyzed_func
         end
         machine.tail_call = branch
+        machine.tail_call_arguments = arguments_to_pass
       end
     end
 
@@ -626,10 +636,10 @@ class LispMachine
 
   # remap variables without a new function call
   # (used for tail call optimization)
-  def replace_args_for_function(branch, args = extract_complex_args_func_call(tail_call))
+  def replace_args_for_function(branch, args = @tail_call_arguments)
     replace_scope
     branch[:arguments].flatten.each_with_index do |a, i|
-      @SYMBOL_TABLE[-1]["#{a}".to_sym] = args[:args][i]
+      @SYMBOL_TABLE[-1]["#{a}".to_sym] = args[i]
     end
     @tail_call = nil
     branch
