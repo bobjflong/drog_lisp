@@ -177,7 +177,7 @@ class SexprParser
   private
 
   def delete_comments!
-    @raw.gsub! /\;[^\n]*$/, ''
+    @raw.gsub! /^[\"]*\;[^\n]*$/, ''
   end
 end
 
