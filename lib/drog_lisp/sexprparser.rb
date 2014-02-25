@@ -1,6 +1,7 @@
 
 require 'thread'
 require 'sxp'
+require 'drog_lisp/stdlib'
 
 class LispMacro
  
@@ -44,6 +45,10 @@ class MacroList
     @macros.empty?
   end
 
+  def +(other)
+    MacroList.new(@macros + other.macros)
+  end
+
   def apply_one_to_prog sxp_parser, prog, other_macros
     @macros.find do |m|
       LispPreprocessor.apply_macro_to_prog sxp_parser, m, prog, other_macros
@@ -54,7 +59,7 @@ end
 module LispPreprocessor
   
   def self.preprocess prog, macros
-    LispPreprocessor.apply_macros_to_prog macros, prog 
+    LispPreprocessor.apply_macros_to_prog (macros + StandardMacros.macros), prog 
   end
 
   def self.apply_macros_to_prog macros, prog

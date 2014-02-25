@@ -470,23 +470,22 @@ class LispMachine
   # Helper method to run embedded programs quickly
   def self.run(prog, attrs = nil)
     
-    # 1. Preprocess the user program with the standard macros
-    LispPreprocessor.preprocess prog, StandardMacros.macros
-
-    # 2. Then parse it
+    # Preprocess the user program with the standard macros
+    LispPreprocessor.preprocess prog, MacroList.new([])
+    # Then parse it
     parsed = Parser.new.parse prog
     
     machine = LispMachine.new
-    # 3. Preload the machine with given values
+    # Preload the machine with given values
     machine.preload attrs if attrs
     
-    # 4. Run the functions making up the standard library
+    # Run the functions making up the standard library
     machine.interpret Parser.new.parse(StandardFunctions.listing)
     
-    # 5. Run the user program
+    # Run the user program
     machine.interpret(parsed)
     
-    # 6. Grab and return the last evaluated value
+    # Grab and return the last evaluated value
     machine.last_evaluated
   end
 
