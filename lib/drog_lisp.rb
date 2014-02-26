@@ -408,12 +408,12 @@ class LispMachine
     end
 
     def analyze_call branch
-      #map the arguments to lambdas that will give us the argument
+      
       analyzed_args = branch.drop(2).map do |a|
         dispatch a
       end
 
-      #do we need to analyze the function?
+      # We don't need to analyze the function argument if its a simple string reference
       analyzed_func = nil
       analyzed_func = dispatch(branch[1]) unless branch[1].kind_of?(String)
 
@@ -549,19 +549,6 @@ class LispMachine
     end
   end
   
-  # Extract simple args for 2-operand operators like +, - etc.
-  def extract_simple_args(branch)
-    
-    res = []
-    interpret([branch[POSITION_OF_ARG_SIMPLE_0]])
-    res << @last_evaluated
-
-    interpret([branch[POSITION_OF_ARG_SIMPLE_1]])
-    res << last_evaluated
-
-    return res
-  end
-      
   # Extract and set up a function call
   def extract_complex_args_func_call(branch)
     result = {

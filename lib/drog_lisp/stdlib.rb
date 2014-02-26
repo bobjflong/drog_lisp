@@ -52,8 +52,17 @@ module StandardMacros
       ast.drop(1).to_cons
     end
   end
+  
+  # wrap a simple function body into an anon function definition
+  # (+ 1 2)
+  # => (Func _ void) (Do (+ 1 2))
+  def self.fwrap
+    LispMacro.new 'fwrap' do |ast|
+      [:Func, :_, :void].to_sxp + [:Do, ast[1]].to_sxp
+    end
+  end
 
   def self.macros
-    MacroList.new [StandardMacros.backtick]
+    MacroList.new [StandardMacros.fwrap, StandardMacros.backtick]
   end
 end

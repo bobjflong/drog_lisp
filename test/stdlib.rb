@@ -34,5 +34,15 @@ describe "stdlib macros" do
       )
     ))
   end
+
+  it "function wrap" do
+    assert_equal 4, LispMachine.run(%Q(
+      (Do
+        (Call
+          (fwrap (+ 1 3))
+        void)
+      )
+    ))
+  end
 end
 
