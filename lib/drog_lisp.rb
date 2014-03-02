@@ -18,11 +18,6 @@ class LispMachine
     @analyzer = Analyzer.new self
     
     @SYMBOL_TABLE = [{ }]
-    @last_evaluated
-
-    # Information about tail call optimization
-    @tail_call
-    @tail_call_arguments
   end
   
   
