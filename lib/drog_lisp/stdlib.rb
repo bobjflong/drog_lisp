@@ -62,7 +62,37 @@ module StandardMacros
     end
   end
 
+  # Sequence a series of messages to be sent to an origin object
+  # (send_all "to_s" (`(2013 3 4)) :Date)
+  # => (Send "to_s" (Send (Cons :new (Cons 2013 (Cons 3 4))) :Date))
+  # => 2013-03-04
+  def self.send_all
+    LispMacro.new 'send_all' do |ast|
+      origin = ast.pop
+      messages = ast.drop 1
+
+      #binding.pry
+      unless messages.empty?
+        StandardMacros.deflatten(messages, :Send, origin).to_sxp
+      else
+        String.new
+      end
+    end
+  end
+
   def self.macros
-    MacroList.new [StandardMacros.fwrap, StandardMacros.backtick]
+    MacroList.new [StandardMacros.fwrap, StandardMacros.backtick, StandardMacros.send_all]
+  end
+
+  # Nest a list of items
+  # self.deflatten [:one, :two], :Op, :three
+  # => [:Op, :one, [:Op, :two :three]]
+  def self.deflatten list, prefix, final
+    next_value = list.shift
+    if list.empty?
+      [prefix, next_value, final]
+    else
+      [prefix, next_value, StandardMacros.deflatten(list, prefix, final)]
+    end
   end
 end

@@ -44,5 +44,13 @@ describe "stdlib macros" do
       )
     ))
   end
+
+  it "message sending threading" do
+    assert_equal "2013-03-04", LispMachine.run(%Q(
+      (Do
+        (send_all "to_s" (`(:new 2013 3 4)) :Date)
+      )
+    ))
+  end
 end
 
