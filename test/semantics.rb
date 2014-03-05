@@ -500,6 +500,13 @@ describe "symbols" do
     """), 3
   end
 
+  it "allows code as string to be evaluated" do
+    assert_equal 4, LispMachine.run(%Q(
+      (Do
+        (Evaluate "(Do (+ 1 3))")
+      )
+    ))
+  end
 end
 
 describe "message sending" do

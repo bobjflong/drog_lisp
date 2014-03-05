@@ -129,7 +129,9 @@ class SexprParser
     
     while true
       next_val = @text[i]
-      if next_val == '"'
+      prev_val = i > 0 ? @text[i-1] : nil
+
+      if next_val == '"' and not prev_val == '\\'
         in_string = in_string ? false : true
       end
 
@@ -144,7 +146,7 @@ class SexprParser
         end
       end
 
-      if next_val == '('
+      if next_val == '(' and not in_string
         count += 1
       end
       

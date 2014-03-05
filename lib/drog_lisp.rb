@@ -234,11 +234,16 @@ class LispMachine
       Proc.new do
         program = call_and_retrieve_last_evaluated eval_eval
         sexp = nil
-
-        if not program[0] == :Do
-          sexp = [:Do, program].to_sxp
+       
+        #TODO: refactor long conditional
+        if program.kind_of? String
+          sexp = program
         else
-          sexp = program.to_sxp
+          if not program[0] == :Do
+            sexp = [:Do, program].to_sxp
+          else
+            sexp = program.to_sxp
+          end
         end
         set_last_evaluated(LispMachine.run(sexp))
       end

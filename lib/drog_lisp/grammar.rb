@@ -34,7 +34,8 @@ module Tokens
 end
 
 module GrammarHelpers
-
+  
+  # Recursively add arguments to a result list
   def self.add_arguments result, a
     a.each do |to_add|
       if to_add[0].kind_of? Array
@@ -45,6 +46,8 @@ module GrammarHelpers
     end
   end
   
+  # Called by the grammer description below.
+  # Calls add_arguments to produce a result list of arguments
   def self.gather_arguments result, a
     if a.length > 0 and not a[0].kind_of? Array
       #single element arg list
@@ -57,8 +60,6 @@ module GrammarHelpers
 end
 
 class Parser < Whittle::Parser
-  
-
   
   rule(:wsp => /\s+/).skip!
 
@@ -100,7 +101,7 @@ class Parser < Whittle::Parser
   rule(:show => /Show/).as { |s| s }
   rule(:name => /[a-zA-Z\-\_\?]+/).as { |n| n }
   rule(:reserved => /[\+\-\\\*]/).as { |n| n }
-  rule(:const => /([0-9]+)|((\")[^\"]*(\"))/).as do |n| 
+  rule(:const => /([0-9]+)|((\")(\\"|[^\"])*(\"))/).as do |n| 
     if not n[0] == '"'  then
       n.to_i
     else
