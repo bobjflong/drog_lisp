@@ -2,6 +2,7 @@
 require 'drog_lisp/grammar'
 require 'drog_lisp/stdlib'
 require 'drog_lisp/userlisp'
+require 'drog_lisp/message_receiver_pair'
 require 'drog_lisp/sexprparser'
 require 'ostruct'
 require 'continuation'
@@ -207,22 +208,9 @@ class LispMachine
 
       Proc.new do
         message, receiver = call_and_retrieve_last_evaluated send_eval, receiver_eval
-        
-        #Map symbol receivers to real equivalents
-        # eg :Time => Time
-        receiver = Kernel.const_get(receiver) if receiver.kind_of? Symbol
-      
-        begin 
-        if not message.kind_of? Array
-          set_last_evaluated receiver.send message
-        else
-          # If the arguments are an array, don't splat them in
-          if message.length == 2 and message[1].kind_of? Array
-            set_last_evaluated receiver.send(message[0], message.drop(1))
-          else 
-            set_last_evaluated receiver.send(message[0], *message.drop(1))
-          end
-        end
+       
+        begin
+          set_last_evaluated MessageReceiverPair.new(message, receiver).perform
         rescue Exception => e
           binding.pry
         end
