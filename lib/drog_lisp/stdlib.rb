@@ -80,8 +80,19 @@ module StandardMacros
     end
   end
 
+  # TODO
+  # this has been copypasted from brig
+  # it's basic, but write a test
+  def self.cat
+    LispMacro.new 'cat' do |ast|
+      left = ast[1].to_sxp
+      right = ast[2].to_sxp
+      """(Send (Cons :+ #{right}) #{left})"""
+    end
+  end
+
   def self.macros
-    MacroList.new [StandardMacros.fwrap, StandardMacros.backtick, StandardMacros.send_all]
+    MacroList.new [StandardMacros.cat, StandardMacros.fwrap, StandardMacros.backtick, StandardMacros.send_all]
   end
 
   # Nest a list of items
@@ -95,4 +106,5 @@ module StandardMacros
       [prefix, next_value, StandardMacros.deflatten(list, prefix, final)]
     end
   end
+
 end

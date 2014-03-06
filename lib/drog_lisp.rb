@@ -245,7 +245,7 @@ class LispMachine
             sexp = program.to_sxp
           end
         end
-        set_last_evaluated(LispMachine.run(sexp))
+        set_last_evaluated(LispMachine.run(sexp.gsub(/\\"/,'"'), { machine: @machine }))
       end
     end
 
@@ -475,7 +475,7 @@ class LispMachine
     # Then parse it
     parsed = Parser.new.parse prog
     
-    machine = LispMachine.new
+    machine = (attrs && attrs[:machine]) || LispMachine.new
     # Preload the machine with given values
     machine.preload attrs if attrs
     
