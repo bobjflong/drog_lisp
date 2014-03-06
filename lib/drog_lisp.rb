@@ -1,6 +1,7 @@
 
 require 'drog_lisp/grammar'
 require 'drog_lisp/stdlib'
+require 'drog_lisp/userlisp'
 require 'drog_lisp/sexprparser'
 require 'ostruct'
 require 'continuation'
@@ -233,19 +234,7 @@ class LispMachine
       
       Proc.new do
         program = call_and_retrieve_last_evaluated eval_eval
-        sexp = nil
-       
-        #TODO: refactor long conditional
-        if program.kind_of? String
-          sexp = program
-        else
-          if not program[0] == :Do
-            sexp = [:Do, program].to_sxp
-          else
-            sexp = program.to_sxp
-          end
-        end
-        set_last_evaluated(LispMachine.run(sexp.gsub(/\\"/,'"'), { machine: @machine }))
+        set_last_evaluated(LispMachine.run(UserLisp.new(program).program, { machine: @machine }))
       end
     end
 
