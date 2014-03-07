@@ -135,8 +135,6 @@ class Parser < Whittle::Parser
     r["(", :define, :name, :param_list, :closure_list, ")", :expr].as do |_,_,n,p,c,_,e| 
       [ Tokens::DEFINE, n, p, c, e ]
     end
-
-    r[:escapestart, :escapeanything, :escapeend].as { |_,v| [Tokens::ESCAPE, v] } 
  
     r["(", :let, :name, :deducted_value, ")"].as do |_,_,n,v,_|
       [ Tokens::LET, n, v ]
@@ -171,6 +169,8 @@ class Parser < Whittle::Parser
     r["(", :evaluate, :deducted_value, ")"].as do |_,_,d|
       [ Tokens::EVALUATE, d]
     end
+
+    r[:escapestart, :escapeanything, :escapeend].as { |_,v| [Tokens::ESCAPE, v] } 
     
     r["(", :struct, :param_list, ")"].as do |_,_,p|
       [ Tokens::STRUCT, p ]

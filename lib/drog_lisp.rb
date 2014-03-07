@@ -2,6 +2,7 @@
 require 'drog_lisp/grammar'
 require 'drog_lisp/stdlib'
 require 'drog_lisp/userlisp'
+require 'drog_lisp/cons_pair'
 require 'drog_lisp/message_receiver_pair'
 require 'drog_lisp/sexprparser'
 require 'ostruct'
@@ -126,45 +127,18 @@ class LispMachine
       not is_cmpd(branch)
     end
 
-    def wrap_unless_cmpd branch
-      return [] unless branch
-      return branch if is_cmpd(branch)
-      [branch]
-    end
-    
     def analyze_escape branch
       escaped = SXP.read(branch[1])
       -> { set_last_evaluated escaped }
     end
     
-    #Special case with keyword :Do
-    #:Do -cons with-
-    #[:+, :x, :y]
-    # => [:Do, [:+, :x, :y]]
-    # ie. Should not be merged into one list
-    # makes writing drog programs in drog a little easier
     def analyze_cons(branch)
       left_eval = dispatch branch[1]
       right_eval = dispatch branch[2]
       
       Proc.new do
-
         left, right = call_and_retrieve_last_evaluated left_eval, right_eval
-        
-        if not right
-          set_last_evaluated left
-        else
-          if left == :Do
-            merge_do_keyword_with_list left, right 
-          else
-            if left.kind_of? Array
-              set_last_evaluated [left] + wrap_unless_cmpd(right)
-            else
-              set_last_evaluated [left,right].flatten 1
-            end
-          end
-        end
-
+        set_last_evaluated ConsPair.new(left, right).resolve
       end
     end
 
@@ -420,14 +394,6 @@ class LispMachine
         func: function,
         args: arguments
       }
-    end
-
-    def merge_do_keyword_with_list left, right
-      if is_not_cmpd right
-       set_last_evaluated [left, right] 
-      else
-        set_last_evaluated [left, right].flatten 1
-      end
     end
 
     def call_and_retrieve_last_evaluated *to_eval
