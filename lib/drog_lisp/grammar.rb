@@ -6,6 +6,7 @@ module Tokens
   SEND = "send"
   ADD = "+"
   DEFINE = "def"
+  ESCAPE = "escape"
   SET = "set"
   CALL = "call"
   APPLY= "apply"
@@ -124,12 +125,18 @@ class Parser < Whittle::Parser
     end
     r[]
   end
+
+  rule(:escapestart => /\(\!/).as { |e| e }
+  rule(:escapeend => /\!\)/).as { |e| e }
+  rule(:escapeanything => /\!.*/).as { |e| e[1..-1] }
   
   rule(:inner_expr) do |r|
  
     r["(", :define, :name, :param_list, :closure_list, ")", :expr].as do |_,_,n,p,c,_,e| 
       [ Tokens::DEFINE, n, p, c, e ]
     end
+
+    r[:escapestart, :escapeanything, :escapeend].as { |_,v| [Tokens::ESCAPE, v] } 
  
     r["(", :let, :name, :deducted_value, ")"].as do |_,_,n,v,_|
       [ Tokens::LET, n, v ]

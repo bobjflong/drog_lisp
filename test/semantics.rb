@@ -125,6 +125,18 @@ describe "structs" do
   end
 end
 
+describe "escaping" do
+  it "escapes lists" do
+    assert_equal [1,2,3], LispMachine.run(%Q(
+      (Do
+        (!
+          !(1 2 3)
+        !)
+      )
+    ))
+  end
+end
+
 describe "loops" do
   it "can do basic loops" do
     assert_output "0\n1\n2\n3\n" do

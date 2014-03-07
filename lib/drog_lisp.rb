@@ -132,6 +132,11 @@ class LispMachine
       [branch]
     end
     
+    def analyze_escape branch
+      escaped = SXP.read(branch[1])
+      -> { set_last_evaluated escaped }
+    end
+    
     #Special case with keyword :Do
     #:Do -cons with-
     #[:+, :x, :y]

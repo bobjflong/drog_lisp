@@ -52,5 +52,13 @@ describe "stdlib macros" do
       )
     ))
   end
+
+  it "allows sequences to be escaped" do
+    assert_equal [:Foo, [1, 2, 3]], LispMachine.run(%Q(
+      (Do
+        (' (Foo (1 2 3)) )
+      )
+    ))
+  end
 end
 

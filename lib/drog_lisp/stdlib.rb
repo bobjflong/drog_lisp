@@ -16,7 +16,8 @@ module StandardFunctions
         (Do
           (Let list x)
           (If (Send "blank?" list)
-            (empty-list)
+            ; TODO - double check (i changed this from (empty-list) which is null?)
+            (Send :new :Array)
             (Cons (Call f (Car list)) (Call map f (Cdr list)))
           )
         )
@@ -52,6 +53,12 @@ module StandardMacros
       ast.drop(1).to_cons
     end
   end
+
+  def self.quote
+    LispMacro.new "'" do |ast|
+      "\n(!\n !" + ast[1].to_sxp + "\n!)\n" 
+    end
+  end
   
   # wrap a simple function body into an anon function definition
   # (+ 1 2)
@@ -71,7 +78,6 @@ module StandardMacros
       origin = ast.pop
       messages = ast.drop 1
 
-      #binding.pry
       unless messages.empty?
         StandardMacros.deflatten(messages, :Send, origin).to_sxp
       else
@@ -92,7 +98,8 @@ module StandardMacros
   end
 
   def self.macros
-    MacroList.new [StandardMacros.cat, StandardMacros.fwrap, StandardMacros.backtick, StandardMacros.send_all]
+    MacroList.new [StandardMacros.cat, StandardMacros.fwrap, StandardMacros.quote,
+    StandardMacros.backtick, StandardMacros.send_all]
   end
 
   # Nest a list of items
