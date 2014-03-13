@@ -96,9 +96,16 @@ module StandardMacros
       """(Send (Cons :+ #{right}) #{left})"""
     end
   end
+  
+  #Alias for Send
+  def self.dot
+    LispMacro.new '.' do |ast|
+      [:Send, ast[1], ast[2]].to_sxp
+    end
+  end
 
   def self.macros
-    MacroList.new [StandardMacros.cat, StandardMacros.fwrap, StandardMacros.quote,
+    MacroList.new [StandardMacros.dot, StandardMacros.cat, StandardMacros.fwrap, StandardMacros.quote,
     StandardMacros.backtick, StandardMacros.send_all]
   end
 

@@ -53,6 +53,12 @@ describe "stdlib macros" do
     ))
   end
 
+  it "allows dot syntax for sending" do
+    assert_equal Time, LispMachine.run(%Q(
+      (Do (. :class (. :new :Time) ) )
+    ))
+  end
+
   it "allows sequences to be escaped" do
     assert_equal [:Foo, [1, 2, 3]], LispMachine.run(%Q(
       (Do
