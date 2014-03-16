@@ -1,2 +1,6 @@
 
 *.swp
+
+.bundle/install.log
+
+*.gem

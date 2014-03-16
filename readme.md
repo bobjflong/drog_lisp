@@ -311,7 +311,7 @@ LispMachine.run """
 
 ######Communicating with ruby objects
 
-Use Send to send messages to underlying Ruby objects.
+Use Send (or dot '.') to send messages to underlying Ruby objects.
 
 ```ruby
 len = LispMachine.run """
@@ -327,8 +327,8 @@ len = LispMachine.run """
 ```ruby
 LispMachine.run """
 (Do
-  (Let time (Send :new :Time))
-  (Send :class time)
+  (Let time (. :new :Time))
+  (. :class time)
 )
 """
 
