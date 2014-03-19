@@ -137,24 +137,6 @@ describe "escaping" do
   end
 end
 
-describe "loops" do
-  it "can do basic loops" do
-    assert_output "0\n1\n2\n3\n" do
-      LispMachine.run """
-      (Do
-        (Let x 0)
-        (LoopUntil (= x 4)
-          (Do
-            (Show x)
-            (Let x (+ x 1))
-          )
-        )
-      )
-      """
-    end
-  end
-end
-
 describe "tail optimization" do
   it "can handle crazy levels of recursion" do
     assert_output "done\n" do

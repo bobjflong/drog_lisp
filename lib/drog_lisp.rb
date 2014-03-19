@@ -103,22 +103,6 @@ class LispMachine
       end
     end
 
-    def analyze_loopuntil(branch)
-      pred_eval = dispatch branch[1]
-      body = dispatch branch[2]
-
-      Proc.new do
-        while true
-          pred_eval.call
-          if not machine.last_evaluated
-            body.call
-          else
-            break
-          end
-        end
-      end
-    end
-
     def is_cmpd branch
       (branch.kind_of? Array and branch.length > 1 and branch[0].kind_of? Array)
     end
@@ -255,7 +239,7 @@ class LispMachine
         analyzed.each do |a|
           a.call if a.respond_to? :call
         end
-        rescue Exception => e
+        rescue => e
           binding.pry
         end
       end
@@ -269,7 +253,6 @@ class LispMachine
         struct, val = call_and_retrieve_last_evaluated struct_eval, val_eval
         
         machine.check_for_struct struct, value_to_set
-
         struct.send "#{value_to_set}=", val
       end
     end
@@ -526,7 +509,7 @@ class LispMachine
   end
 
   def save_closed_variables_from_scope(closed)
-    result = {}
+    result = Hash.new
     if closed
       closed.each do |k, v|
         result[k.to_sym] = @SYMBOL_TABLE[-1][k.to_sym]

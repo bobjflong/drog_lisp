@@ -14,7 +14,6 @@ module Tokens
   GET = "get"
   SHOW = "show"
   LT = "<"
-  LOOPUNTIL = "loopuntil"
   IF = "if"
   MUL = "*"
   DIV = "/"
@@ -85,7 +84,6 @@ class Parser < Whittle::Parser
   rule(:cons => /Cons/).as { |c| c }
   rule(:do => /Do/).as { |d| d }
   rule(:null => /null/).as { |n| n }
-  rule(:loopuntil => /LoopUntil/).as { |l| l }  
   rule(:evaluate => /Evaluate/).as { |e| e }
   rule(:gets => /Get\-[a-zA-Z\-]+/).as { |g| g }
   rule(:set => /Set\-[a-zA-Z\-]+/).as { |s| s }
@@ -142,10 +140,6 @@ class Parser < Whittle::Parser
 
     r["(", :reset, :name, :deducted_value, ")"].as do |_,_,n,v,_|
       [ Tokens::RESET, n, v]
-    end
-
-    r["(", :loopuntil, :deducted_value, :expr, ")"].as do |_,_,v,e|
-      [ Tokens::LOOPUNTIL, v, e]
     end
  
     r["(", :show, :inner_expr, ")"].as do |_,_,n,_|
