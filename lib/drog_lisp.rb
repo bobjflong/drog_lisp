@@ -535,6 +535,26 @@ class LispMachine
     nil
   end
 
+  def push_arguments_variable arguments
+    @SYMBOL_TABLE[-1][:arguments] = arguments
+  end
+
+  def reclose_over args, reclosed
+    if reclosed
+      if args[:func]
+        args[:func][:closed_over] = reclosed
+      else
+        lookup(@SYMBOL_TABLE.length - 1, args[:func_name])[:closed_over] = reclosed
+      end
+    end
+  end
+
+  def write_arguments_to_symbol_table parameters, arguments
+    parameters.flatten.each_with_index do |a, i|
+      @SYMBOL_TABLE[-1]["#{a}".to_sym] = arguments[i]
+    end
+  end
+
   # Set up a symbol table for a function call
   def map_params_for_function(args, cc = false)
 
@@ -550,19 +570,12 @@ class LispMachine
       # Begin the mapping by creating a new scope
       push_scope()
 
-      func_find[:arguments].flatten.each_with_index do |a, i|
-        @SYMBOL_TABLE[-1]["#{a}".to_sym] = args[:args][i]
-      end
+      write_arguments_to_symbol_table func_find[:arguments], args[:args]
+      push_arguments_variable args[:args]
       push_closed_variables_to_scope(func_find[:closed_over])
-      reclosed = pass_execution_to_function func_find
 
-      if reclosed
-        if args[:func]
-          args[:func][:closed_over] = reclosed
-        else
-          lookup(@SYMBOL_TABLE.length - 1, args[:func_name])[:closed_over] = reclosed
-        end
-      end
+      # Once the execution is complete, we may need to close over some vals
+      reclose_over args, pass_execution_to_function(func_find)
 
     end
   end
@@ -571,9 +584,7 @@ class LispMachine
   # (used for tail call optimization)
   def replace_args_for_function(branch, args = @tail_call_arguments)
     replace_scope
-    branch[:arguments].flatten.each_with_index do |a, i|
-      @SYMBOL_TABLE[-1]["#{a}".to_sym] = args[i]
-    end
+    write_arguments_to_symbol_table branch[:arguments], args
     @tail_call = nil
     branch
   end

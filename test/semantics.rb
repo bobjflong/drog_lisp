@@ -137,6 +137,20 @@ describe "escaping" do
   end
 end
 
+describe "variadic functions" do
+  it "passes all arguments as a list" do
+    assert_equal [1,2,3], LispMachine.run(%Q(
+      (Do
+        (Func add x y)
+          (Do
+            (+ x y)
+            arguments)
+          (Call add 1 2 3)
+      )
+    ))
+  end
+end
+
 describe "tail optimization" do
   it "can handle crazy levels of recursion" do
     assert_output "done\n" do
