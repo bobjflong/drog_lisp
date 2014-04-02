@@ -109,9 +109,9 @@ Using the lambda macro:
   
   (Let inc (Call adder 1))
   
-  (Show (Call inc 1))
-  (Show (Call inc 1))
-  (Show (Call inc 1))
+  (Show (Call inc 1)) ; 2
+  (Show (Call inc 1)) ; 3
+  (Show (Call inc 1)) ; 4
 )
 ```
 
@@ -194,9 +194,9 @@ LispMachine.run """
 
 (Do
   (Let bob (Struct name age))
-    (Set-age bob 21)
-    (Set-name bob \"bob\")
-    (Show (Get-name bob))
+  (Set-age bob 21)
+  (Set-name bob \"bob\")
+  (Show (Get-name bob))
 )
 """
 ```
@@ -272,6 +272,16 @@ LispMachine.run """
 """
 
 #=> 3
+```
+
+or, simply
+
+```
+(Do
+  (Show
+    (Evaluate
+      ('(+ 1 2))))
+)
 ```
 
 ######Tail call optimization
