@@ -100,7 +100,7 @@ LispMachine.run """
 
 Using the lambda macro:
 
-```ruby
+```lisp
 (Do
   (Func adder y)
     (Do
@@ -276,7 +276,7 @@ LispMachine.run """
 
 or, simply
 
-```
+```lisp
 (Do
   (Show
     (Evaluate
