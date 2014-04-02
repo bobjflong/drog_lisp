@@ -66,5 +66,18 @@ describe "stdlib macros" do
       )
     ))
   end
+  
+  it "allows lambdas!" do
+    assert_equal 42, LispMachine.run(%Q(
+      (Do
+        (Func adder x)
+          (Do
+            (lambda y ~(x) (Do (+ x y))))
+
+        (Let two-adder (Call adder 2))
+        (Call two-adder 40)
+      )
+    ))
+  end
 end
 

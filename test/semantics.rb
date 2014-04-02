@@ -39,14 +39,16 @@ describe "immediate function execution" do
     assert_equal 42, LispMachine.run(%Q(
         (Do
           (Call
-            (Func _ void)
+            (lambda void
               (Do
                 (Call
-                  (Func _ x)
+                  (lambda x
                     (Do x)
+                  )
                   42
                 )
               )
+            )
             void
           )
         )

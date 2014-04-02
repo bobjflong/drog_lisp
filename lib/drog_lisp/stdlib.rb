@@ -104,9 +104,22 @@ module StandardMacros
     end
   end
 
+  def self.lambda
+    LispMacro.new 'lambda' do |ast|
+      #lambda y ~(x) (Do ... )
+      ast = ast.drop 1
+      #y ~(x)
+      body = ast.pop
+      #rewrite the prototype as a Func
+      proto = ast.unshift :_
+      proto = proto.unshift :Func
+      proto.to_sxp + body.to_sxp
+    end
+  end
+
   def self.macros
     MacroList.new [StandardMacros.dot, StandardMacros.cat, StandardMacros.fwrap, StandardMacros.quote,
-    StandardMacros.backtick, StandardMacros.send_all]
+    StandardMacros.backtick, StandardMacros.send_all, StandardMacros.lambda]
   end
 
   # Nest a list of items
