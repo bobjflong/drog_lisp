@@ -72,38 +72,6 @@ print LispMachine.run """
 
 ######Closures
 
-You can store values alongside function definitions to create closures using the tilde "~" directive:
-
-```ruby
-LispMachine.run """
-
-(Do
-
-  (Let x (+ 3 1))
-
-  (Func example void ~(x))
-    (Do
-      (Show x)
-    )
-
-  (Let x 5)
-
-  (Call example void)  
-  (Show x)
-
-)
-
-"""
-
-#> 4
-#> 5
-# Original value of x was used in function as it was included in the closure list using "~"
-
-
-```
-
-######Closures
-
 Classic example of closures, an accumulative adder:
 
 ```ruby
