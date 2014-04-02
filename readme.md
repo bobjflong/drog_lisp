@@ -14,7 +14,6 @@ Embedded functional language for Ruby --- resembles scheme/lisp but with unique 
 * Tail call optimization
 
 #####Code samples:
-* [Numerical differentiation + Newton's method](https://gist.github.com/bobjflong/7984315)
 * [A static site generator](https://github.com/bobjflong/brig)
 
 #####Examples:
