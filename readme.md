@@ -1,5 +1,7 @@
 ##drog_lisp
 
+[Read my development blog!](http://bobjflong.co/)
+
 Embedded functional language for Ruby --- resembles scheme/lisp but with unique semantics.
 
 
