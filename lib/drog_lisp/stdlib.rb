@@ -106,10 +106,13 @@ module StandardMacros
 
   def self.lambda
     LispMacro.new 'lambda' do |ast|
-      #lambda y ~(x) (Do ... )
+      #y ~(x) (Do ... )
       ast = ast.drop 1
       #y ~(x)
+      
       body = ast.pop
+      body = [:Do, body] unless body.first == :Do
+      
       #rewrite the prototype as a Func
       proto = ast.unshift :_
       proto = proto.unshift :Func

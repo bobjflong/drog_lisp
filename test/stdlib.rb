@@ -72,7 +72,7 @@ describe "stdlib macros" do
       (Do
         (Func adder x)
           (Do
-            (lambda y ~(x) (Do (+ x y))))
+            (lambda y ~(x) (+ x y)))
 
         (Let two-adder (Call adder 2))
         (Call two-adder 40)

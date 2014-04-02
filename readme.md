@@ -131,6 +131,23 @@ LispMachine.run """
 #> 15
 ```
 
+Using the lambda macro:
+
+```ruby
+(Do
+  (Func adder y)
+    (Do
+      (lambda x ~(y)
+        (Let y (+ y x))))
+  
+  (Let inc (Call adder 1))
+  
+  (Show (Call inc 1))
+  (Show (Call inc 1))
+  (Show (Call inc 1))
+)
+```
+
 ######Continuations
 
 drog_lisp neatly wraps Ruby's callcc function to provide expressive continuation support. In the following example I use the CallCC directive to return to a calling function after making nested calls:
