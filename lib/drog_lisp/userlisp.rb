@@ -10,13 +10,24 @@ class UserLisp
   
   def initialize program
     if program.kind_of? String
-      @program = unescape program
+      @program = reconstruct(unescape program)
     else
       @program = unescape(from_data_structure program)
     end
   end
 
   private
+  
+  # allow for fragments like:
+  # (Call f 1)
+  # => (Do (Call f 1))
+  def reconstruct program
+    if program.match /\(\s*Do/
+      program
+    else
+      "(Do " + program + ")"
+    end
+  end
 
   def unescape program
     program.gsub /\\"/, '"'
