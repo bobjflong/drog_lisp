@@ -335,20 +335,13 @@ describe "function application" do
         (Func y f)
           (Do
             (Call
-              (Func _ x)
-                (Do (Call x x))
+              (lambda x
+                (Call x x))
 
-              (Func _ g ~(f))
-                (Do
+              (lambda g ~(f)
                   (Call f
-                    (Func _ args ~(g))
-                      (Do
-                        (Apply (Call g g) args)
-                      )
-                  )
-                )
-            )
-          )
+                    (lambda args ~(g)
+                        (Apply (Call g g) args))))))
 
         (Func factorial f)
           (Do
@@ -356,10 +349,8 @@ describe "function application" do
               (Do
                 (If (< n 2)
                   1
-                  (* n (Call f (- n 1)))
-                )
-              )
-          )
+                  (* n (Call f (- n 1))))))
+
         (Call (Call y factorial) 6)
       )
     """)
