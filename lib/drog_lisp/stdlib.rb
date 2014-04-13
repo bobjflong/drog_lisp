@@ -7,6 +7,10 @@ class Object
   def blank?
     respond_to?(:empty?) ? empty? : !self
   end
+
+  def unflat_send msg, *args
+    self.send msg, args
+  end
 end
 
 module StandardFunctions
