@@ -24,6 +24,16 @@ describe "stdlib functions" do
       )
     ))
   end
+
+  it "folds" do
+    machine = LispMachine.new
+
+    assert_equal 10, LispMachine.run(%Q(
+      (Do
+        (Call fold (lambda x y (+ x y)) 0 (`(1 2 4 3)))
+      )
+    ))
+  end
 end
 
 describe "stdlib macros" do

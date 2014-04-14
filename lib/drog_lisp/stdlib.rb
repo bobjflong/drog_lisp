@@ -20,11 +20,20 @@ module StandardFunctions
         (Do
           (Let list x)
           (If (Send "blank?" list)
-            ; TODO - double check (i changed this from (empty-list) which is null?)
             (Send :new :Array)
-            (Cons (Call f (Car list)) (Call map f (Cdr list)))
-          )
-        )
+            (Cons (Call f (Car list)) (Call map f (Cdr list)))))
+    )
+  end
+
+  def self.fold
+    %Q(
+      (Func fold f acc x)
+        (Do
+          (Let list x)
+          ;(Send :pry :binding)
+          (If (Send "blank?" list)
+            acc
+            (Call fold f (Call f acc (Car list)) (Cdr x))))
     )
   end
 
@@ -38,15 +47,12 @@ module StandardFunctions
             (Send :new :Array)
             (If (Call f (Car list))
               (Cons (Car list) (Call filter f (Cdr list)))
-              (Call filter f (Cdr list))
-            )
-          )
-        )
+              (Call filter f (Cdr list)))))
     )
   end
 
   def self.listing
-    "(Do " + ([StandardFunctions.filter, StandardFunctions.map].join " ") + ")"
+    "(Do " + ([StandardFunctions.fold, StandardFunctions.filter, StandardFunctions.map].join " ") + ")"
   end
 end
 
