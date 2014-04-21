@@ -92,7 +92,7 @@ class Parser < Whittle::Parser
   rule(:call => /Call/).as { |c| c }
   rule(:apply => /Apply/).as { |a| a }
   rule(:struct => /Struct/).as { |s| s }
-  rule(:quote => /\:[A-Za-z\+\-\\\*\~]+/).as { |q| q }
+  rule(:quote => /\:[\_\?\[\]A-Za-z\+\-\\\*\~]+/).as { |q| q }
   rule(:send => /Send/).as { |s| s }
   rule(:let => /Let/).as { |l| l }
   rule(:reset => /Reset/).as { |s| s }
