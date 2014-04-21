@@ -331,4 +331,11 @@ LispMachine.run """
 # => Time
 ```
 
+However if you have many messages to send to underlying Ruby objects, you can use the ```->``` macro:
+
+```lisp
+> (-> (Cons :join "-") :reverse :uniq :flatten (`(1 2 3 (3 4 5))))
+= 5-4-3-2-1
+```
+
 
