@@ -96,6 +96,14 @@ module StandardMacros
     end
   end
 
+  #alias for send_all
+  def self.send_all_arrow
+    LispMacro.new '->' do |ast|
+      ast[0] = :send_all
+      ast.to_sxp
+    end
+  end
+
   # TODO
   # this has been copypasted from brig
   # it's basic, but write a test
@@ -132,7 +140,7 @@ module StandardMacros
 
   def self.macros
     MacroList.new [StandardMacros.dot, StandardMacros.cat, StandardMacros.fwrap, StandardMacros.quote,
-    StandardMacros.backtick, StandardMacros.send_all, StandardMacros.lambda]
+    StandardMacros.backtick, StandardMacros.send_all, StandardMacros.lambda, StandardMacros.send_all_arrow]
   end
 
   # Nest a list of items
