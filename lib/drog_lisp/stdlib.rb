@@ -50,7 +50,7 @@ module StandardFunctions
               (Call filter f (Cdr list)))))
     )
   end
-
+  
   def self.listing
     "(Do " + ([StandardFunctions.fold, StandardFunctions.filter, StandardFunctions.map].join " ") + ")"
   end
@@ -61,6 +61,18 @@ module StandardMacros
     LispMacro.new '`' do |ast|
       #to_cons currently defined in sexprparser.rb
       ast.drop(1).to_cons
+    end
+  end
+
+  def self.load
+    LispMacro.new 'load' do |ast|
+      dir = ast[2]
+      file = ast[1]
+      %Q(
+        (Let directory (Send (Cons :+ "/") #{dir}))
+        (Let absolute (Send (Cons :+ "#{file}") directory))
+        (Evaluate (Send (Cons :read absolute) :File))
+      )
     end
   end
 
@@ -140,7 +152,7 @@ module StandardMacros
 
   def self.macros
     MacroList.new [StandardMacros.dot, StandardMacros.cat, StandardMacros.fwrap, StandardMacros.quote,
-    StandardMacros.backtick, StandardMacros.send_all, StandardMacros.lambda, StandardMacros.send_all_arrow]
+    StandardMacros.backtick, StandardMacros.send_all, StandardMacros.lambda, StandardMacros.send_all_arrow, StandardMacros.load]
   end
 
   # Nest a list of items
