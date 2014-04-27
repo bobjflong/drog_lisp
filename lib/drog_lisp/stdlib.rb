@@ -51,8 +51,21 @@ module StandardFunctions
     )
   end
   
+  # Like Cons but without merging
+  def self.concat
+    %Q(
+      (Func concat x y)
+        (Do
+          (If (= "Array" (Send :to_s (Send :class x)))
+            (Let left x)
+            (Let left (Send (Cons :push x) (Send :new :Array))))
+          (Send (Cons :unflat_send (Cons "<<" y)) left)
+          left)
+    )
+  end
+  
   def self.listing
-    "(Do " + ([StandardFunctions.fold, StandardFunctions.filter, StandardFunctions.map].join " ") + ")"
+    "(Do " + ([StandardFunctions.concat, StandardFunctions.fold, StandardFunctions.filter, StandardFunctions.map].join " ") + ")"
   end
 end
 
@@ -66,10 +79,9 @@ module StandardMacros
 
   def self.load
     LispMacro.new 'load' do |ast|
-      dir = ast[2]
       file = ast[1]
       %Q(
-        (Let directory (Send (Cons :+ "/") #{dir}))
+        (Let directory (Send (Cons :+ "/") DIR))
         (Let absolute (Send (Cons :+ "#{file}") directory))
         (Evaluate (Send (Cons :read absolute) :File))
       )
