@@ -103,6 +103,13 @@ module StandardMacros
     end
   end
 
+  def self.quick_call
+    LispMacro.new '#' do |ast|
+      ast[0] = :Call
+      ast.to_sxp
+    end
+  end
+
   # Sequence a series of messages to be sent to an origin object
   # (send_all "to_s" (`(2013 3 4)) :Date)
   # => (Send "to_s" (Send (Cons :new (Cons 2013 (Cons 3 4))) :Date))
@@ -164,7 +171,7 @@ module StandardMacros
 
   def self.macros
     MacroList.new [StandardMacros.dot, StandardMacros.cat, StandardMacros.fwrap, StandardMacros.quote,
-    StandardMacros.backtick, StandardMacros.send_all, StandardMacros.lambda, StandardMacros.send_all_arrow, StandardMacros.load]
+    StandardMacros.backtick, StandardMacros.send_all, StandardMacros.lambda, StandardMacros.send_all_arrow, StandardMacros.load, StandardMacros.quick_call]
   end
 
   # Nest a list of items
