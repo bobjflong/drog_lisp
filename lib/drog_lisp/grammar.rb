@@ -214,6 +214,10 @@ class Parser < Whittle::Parser
     r["(", :if, :inner_expr, :inner_expr, :inner_expr, ")"].as do |_,_,a,b,c,_|
       [ Tokens::IF, a, b, c ]
     end
+
+    r["(", :if, :inner_expr, :expr, :expr, ")"].as do |_,_,a,b,c,_|
+      [ Tokens::IF, a, b, c ]
+    end
     
     r["(", :cons, :inner_expr, :inner_expr, ")"].as do |_,_,a,b,_|
       [ Tokens::CONS, a, b ]

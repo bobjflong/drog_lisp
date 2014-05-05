@@ -2,16 +2,25 @@ GEM
   remote: https://rubygems.org/
   specs:
     coderay (1.1.0)
+    ffi (1.9.3-java)
     method_source (0.8.2)
     pry (0.9.12.6)
       coderay (~> 1.0)
       method_source (~> 0.8)
       slop (~> 3.4)
+    pry (0.9.12.6-java)
+      coderay (~> 1.0)
+      method_source (~> 0.8)
+      slop (~> 3.4)
+      spoon (~> 0.0)
     slop (3.4.7)
+    spoon (0.0.4)
+      ffi
     sxp (0.1.5)
     whittle (0.0.8)
 
 PLATFORMS
+  java
   ruby
 
 DEPENDENCIES

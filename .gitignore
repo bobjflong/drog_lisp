@@ -5,3 +5,5 @@
 
 *.gem
 *.swo
+
+*.lock
